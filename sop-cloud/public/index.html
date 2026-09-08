@@ -486,6 +486,11 @@ function renderDashboard(reminders){
     (ui.searchProgram==='all' || s.programId===ui.searchProgram) &&
     (ui.searchSchool==='all' || s.schoolId===ui.searchSchool)
   ) : [];
+  // 下拉建议：按当前选中的学段/学校筛选出的学生名单，供姓名框下拉选择（也可以直接手动输入）
+  const nameOptions = state.students.filter(s=>
+    (ui.searchProgram==='all' || s.programId===ui.searchProgram) &&
+    (ui.searchSchool==='all' || s.schoolId===ui.searchSchool)
+  );
   return `
   <div class="grid-3">
     <div class="card"><div class="stat">${state.students.length}</div><div class="stat-label">在档学生</div></div>
@@ -495,7 +500,7 @@ function renderDashboard(reminders){
   <div class="card">
     <div class="section-title"><h3>学生查询</h3></div>
     <div class="field-row">
-      <div><label>按姓名搜索</label><input type="text" id="student-search" placeholder="输入学生姓名……" value="${ui.studentSearch||''}"></div>
+      <div><label>按姓名搜索（可从下拉选，也可手动输入）</label><input type="text" id="student-search" list="student-name-options" placeholder="输入或选择学生姓名……" value="${ui.studentSearch||''}"><datalist id="student-name-options">${nameOptions.map(s=>`<option value="${escapeHTML(s.name)}"></option>`).join('')}</datalist></div>
       <div><label>按学段筛选</label><select id="search-program"><option value="all">全部学段</option>${state.programs.map(p=>`<option value="${p.id}" ${ui.searchProgram===p.id?'selected':''}>${p.name}</option>`).join('')}</select></div>
       <div><label>按学校筛选</label><select id="search-school"><option value="all">全部学校</option>${state.schools.map(s=>`<option value="${s.id}" ${ui.searchSchool===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
     </div>
@@ -506,6 +511,7 @@ function renderDashboard(reminders){
           <div class="tname">${stu.name} <span class="subtle">· ${programName(stu.programId)} 第${stu.currentSemester}/${stu.totalSemesters}学期 · ${schoolName(stu.schoolId)}</span></div>
           <div class="tmeta">${dept.map(d=>`${d.role.name} ${d.done}/${d.total}`).join('　·　')}</div>
         </div>
+        <button class="btn sm" data-action="filter-board-student" data-id="${stu.id}">在部门看板查看TA</button>
         <button class="btn sm primary" data-action="open-student" data-id="${stu.id}">打开档案</button>
       </div>`;
     }).join('') : '<div class="empty">没有找到匹配的学生。</div>') : ''}
@@ -524,7 +530,7 @@ function renderDashboard(reminders){
       </div>`).join('') : '<div class="empty">暂无临时任务。</div>'}
   </div>
   <div class="card" style="padding-bottom:8px;">
-    <div class="section-title"><h3>按部门看板 · 未完成 SOP 事项</h3></div>
+    <div class="section-title"><h3>按部门看板 · 未完成 SOP 事项${ui.boardStudentId? ` · 当前只看：${escapeHTML(studentNameById(ui.boardStudentId))}` : ''}</h3>${ui.boardStudentId? `<button class="btn sm ghost" data-action="clear-board-filter">清除筛选，看全部</button>` : ''}</div>
     <div class="nav" style="flex-direction:row;flex-wrap:wrap;gap:6px;margin-top:0;">
       <button data-role-tab="all" class="btn sm ${ui.dashboardRole==='all'?'primary':''}">全部部门</button>
       ${state.roles.map(r=>`<button data-role-tab="${r.id}" class="btn sm ${ui.dashboardRole===r.id?'primary':''}">${r.name}</button>`).join('')}
@@ -533,28 +539,38 @@ function renderDashboard(reminders){
   ${(ui.dashboardRole==='all'? state.roles.map(r=>r.id) : [ui.dashboardRole]).map(roleBoardCard).join('')}
   `;
 }
+function studentNameById(id){ const s=state.students.find(s=>s.id===id); return s? s.name : ''; }
 function roleBoardCard(roleId){
-  const pending = pendingForRole(roleId);
-  const warns = roleWarnItems(roleId);
+  let pending = pendingForRole(roleId);
+  let warns = roleWarnItems(roleId);
+  if(ui.boardStudentId){
+    pending = pending.filter(p=>p.student.id===ui.boardStudentId);
+    warns = warns.filter(w=>w.student.id===ui.boardStudentId);
+  }
   const showHistory = !!ui.historyOpen[roleId];
   const completed = showHistory ? completedForRole(roleId) : [];
+  ui.boardExpanded = ui.boardExpanded || {};
+  const forcedExpand = !!ui.boardStudentId; // 已经筛选到具体学生时，直接展开，不用再点一次
+  const expanded = forcedExpand || !!ui.boardExpanded[roleId];
   return `<div class="card">
     <div class="section-title">
       <h3>${roleName(roleId)} <span class="subtle mono">未完成 ${pending.length}${warns.length?` · 预警 ${warns.length}`:''}</span></h3>
       <div style="display:flex;gap:6px;">
         <button class="btn sm" data-action="export-ics-role" data-role="${roleId}">📅 导出本部门日历</button>
+        ${!forcedExpand? `<button class="btn sm ghost" data-action="toggle-board-expand" data-role="${roleId}">${expanded?'收起清单':`展开清单${pending.length?` (${pending.length})`:''}`}</button>` : ''}
         <button class="btn sm ghost" data-action="toggle-history" data-role="${roleId}">${showHistory?'收起历史':'查看历史记录'}</button>
       </div>
     </div>
     ${warns.length? `<div style="margin-bottom:6px;">${warns.map(w=>`<div class="task-row"><span class="stamp warn2">!</span><div class="tbody"><div class="tname">预警 · ${w.student.name}</div><div class="tmeta">${w.text}</div></div>${w.alertId?`<button class="btn sm" data-action="resolve-alert" data-student="${w.student.id}" data-alert="${w.alertId}">标记已跟进</button>`:`<button class="btn sm" data-action="open-student" data-id="${w.student.id}">查看学生</button>`}</div>`).join('')}</div>`:''}
-    ${pending.length? groupItemsByStage(pending).map(g=>`
+    ${!expanded? (pending.length? `<div class="empty">已折叠 ${pending.length} 项未完成事项，点击上方"展开清单"查看。</div>` : '<div class="empty">该部门当前没有未完成事项。</div>') :
+      (pending.length? groupItemsByStage(pending).map(g=>`
       <h4 style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">${escapeHTML(g.label)}</h4>
       ${g.items.map(p=>`<div class="task-row">
         <span class="stamp ${p.status.state==='overdue'?'warn2':p.status.state==='due-soon'?'warn1':''}">${p.status.state==='overdue'?'!':p.status.state==='due-soon'?'△':'○'}</span>
         <div class="tbody"><div class="tname">${p.student.name} · ${p.task.name}</div>
         <div class="tmeta">产出：${p.task.deliverable||'—'} ${p.status.due?`· 截止 <span class="tdate">${p.status.due}</span>`:''}</div></div>
         <button class="btn sm primary" data-action="toggle-task" data-student="${p.student.id}" data-task="${p.task.id}">标记完成</button>
-      </div>`).join('')}`).join('') : '<div class="empty">该部门当前没有未完成事项。</div>'}
+      </div>`).join('')}`).join('') : '<div class="empty">该部门当前没有未完成事项。</div>')}
     ${showHistory? `<h4 style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">历史记录（已完成）</h4>
       ${completed.length? completed.map(c=>`<div class="task-row"><span class="stamp done">✓</span><div class="tbody"><div class="tname">${c.student.name} · ${c.task.name}</div><div class="tmeta">完成于 ${c.date}</div></div></div>`).join('') : '<div class="empty">暂无历史记录。</div>'}` : ''}
   </div>`;
@@ -1055,7 +1071,10 @@ function bindEvents(){
     el.onclick = (e)=>{
       const a = el.dataset.action;
       if(a==='new-student'){ ui.modal={type:'student', data:{}}; render(); }
-      if(a==='open-student'){ ui.openStudent = el.dataset.id; render(); }
+      if(a==='open-student'){ ui.tab='students'; ui.openStudent = el.dataset.id; render(); }
+      if(a==='filter-board-student'){ ui.boardStudentId = el.dataset.id; render(); }
+      if(a==='clear-board-filter'){ ui.boardStudentId = null; render(); }
+      if(a==='toggle-board-expand'){ ui.boardExpanded = ui.boardExpanded || {}; ui.boardExpanded[el.dataset.role] = !ui.boardExpanded[el.dataset.role]; render(); }
       if(a==='back-students'){ ui.openStudent=null; render(); }
       if(a==='edit-student'){ const s=state.students.find(s=>s.id===el.dataset.id); ui.modal={type:'student', data:s}; render(); }
       if(a==='delete-student'){ showConfirm('确认删除该学生档案？', ()=>{ state.students=state.students.filter(s=>s.id!==el.dataset.id); persist(); }); }
