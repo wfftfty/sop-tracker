@@ -208,8 +208,11 @@ function seedState(){
 
 /* ============================= CLOUD SYNC (MongoDB Atlas via Netlify Functions) ============================= */
 const API_URL = '/api/state';
-function getToken(){ return localStorage.getItem('sop_api_token') || ''; }
-function setToken(t){ localStorage.setItem('sop_api_token', (t||'').trim()); }
+// 访问密钥直接写死在这里，必须和 Netlify 环境变量 API_TOKEN 完全一致，
+// 这样打开网页就不会再弹窗要求输入了（注意：写在前端代码里，等于谁看源代码都能看到，
+// 只适合内部使用、不对外公开网址的场景）。
+const ACCESS_TOKEN = 'aw2026-sop-9x7k';
+function getToken(){ return ACCESS_TOKEN; }
 
 let state = null; // populated by initApp() before first render()
 let saveTimer = null;
@@ -227,7 +230,7 @@ async function saveToServer(){
       headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() },
       body: JSON.stringify(state)
     });
-    if(res.status===401){ showInfo('访问密钥不正确，本次修改未能保存到云端，请刷新页面重新输入密钥'); }
+    if(res.status===401){ showInfo('访问密钥不正确，本次修改未能保存到云端，请检查代码里的 ACCESS_TOKEN 是否和 Netlify 的 API_TOKEN 一致'); }
     else if(!res.ok){ showInfo('保存到云端失败，请检查网络后重试'); }
   }catch(e){ showInfo('保存到云端失败，请检查网络后重试'); }
 }
@@ -241,10 +244,6 @@ async function loadStateFromServer(){
 
 async function initApp(){
   app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#5A6870;font-family:'IBM Plex Sans',sans-serif;">正在连接云端数据库…</div>`;
-  if(!getToken()){
-    const t = window.prompt('请输入访问密钥（与 Netlify 环境变量 API_TOKEN 一致）：') || '';
-    setToken(t);
-  }
   try{
     const data = await loadStateFromServer();
     state = data || seedState();
@@ -252,8 +251,7 @@ async function initApp(){
     render();
   }catch(err){
     if(err.code===401){
-      localStorage.removeItem('sop_api_token');
-      app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#AE3A2E;font-family:'IBM Plex Sans',sans-serif;">访问密钥不正确。<br><br><button onclick="location.reload()" style="padding:8px 16px;">刷新重试</button></div>`;
+      app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#AE3A2E;font-family:'IBM Plex Sans',sans-serif;">访问密钥不正确，请检查代码里的 ACCESS_TOKEN 是否和 Netlify 环境变量 API_TOKEN 完全一致。</div>`;
     } else {
       app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#AE3A2E;font-family:'IBM Plex Sans',sans-serif;">无法连接云端数据库，请检查网络连接。<br><br><button onclick="location.reload()" style="padding:8px 16px;">重试</button></div>`;
     }
