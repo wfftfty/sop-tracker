@@ -200,7 +200,7 @@ function seedState(){
     schools: JSON.parse(JSON.stringify(DEFAULT_SCHOOLS)),
     customFieldDefs: [],
     students: [
-      {id:'stu_demo', name:'示例学生 · 张三', programId:'iy1', currentSemester:1, totalSemesters:5, schoolId:'kaplan', stageId:'s2',
+      {id:'stu_demo', name:'示例学生 · 张三', programId:'iy1', currentSemester:1, totalSemesters:5, schoolId:'kaplan', stageId:'s2', contact:'',
        dates:{enrollDate: addDays(todayISO(),-10), termStart: addDays(todayISO(),12), progressionMilestone:null},
        taskStatus:{}, assignments:[
          {id:uid('asg'), name:'Business Report Draft', dueDate: addDays(todayISO(),4), progress:30, done:false}
@@ -504,7 +504,7 @@ function renderDashboard(reminders){
       const dept = studentDeptSummary(stu);
       return `<div class="task-row" style="align-items:center;">
         <div class="tbody">
-          <div class="tname">${stu.name} <span class="subtle">· ${programName(stu.programId)} 第${stu.currentSemester}/${stu.totalSemesters}学期 · ${schoolName(stu.schoolId)}</span></div>
+          <div class="tname">${stu.name} <span class="subtle">· ${programName(stu.programId)} 第${stu.currentSemester}/${stu.totalSemesters}学期 · ${schoolName(stu.schoolId)}${stu.contact?` · 📞 ${escapeHTML(stu.contact)}`:''}</span></div>
           <div class="tmeta">${dept.map(d=>`${d.role.name} ${d.done}/${d.total}`).join('　·　')}</div>
         </div>
         <button class="btn sm" data-action="filter-board-student" data-id="${stu.id}">在部门看板查看TA</button>
@@ -664,7 +664,7 @@ function reminderRowHTML(r){
 function renderStudentsList(){
   if(!state.students.length) return `<div class="empty">暂无学生档案，点击右上角"+ 新增学生"开始建档。</div>`;
   return `<div class="card"><table>
-    <thead><tr><th>姓名</th><th>学段</th><th>学期</th><th>学校</th><th>当前环节</th><th>开学日期</th><th>预警</th><th></th></tr></thead>
+    <thead><tr><th>姓名</th><th>学段</th><th>学期</th><th>学校</th><th>联系方式</th><th>当前环节</th><th>开学日期</th><th>预警</th><th></th></tr></thead>
     <tbody>
     ${state.students.map(stu=>{
       const alerts = studentAssignmentAlerts(stu).length + (stu.alerts||[]).filter(a=>!a.resolved).length;
@@ -673,6 +673,7 @@ function renderStudentsList(){
         <td>${programName(stu.programId)}</td>
         <td class="mono">${stu.currentSemester||'—'} / ${stu.totalSemesters||'—'}</td>
         <td>${schoolName(stu.schoolId)}</td>
+        <td>${stu.contact? escapeHTML(stu.contact) : '<span class="subtle">—</span>'}</td>
         <td><span class="pill stage">${stageName(stu.stageId)}</span></td>
         <td class="mono">${fmt(stu.dates.termStart)}</td>
         <td>${alerts? `<span class="stamp warn1" style="width:20px;height:20px;font-size:10px;">${alerts}</span>` : '—'}</td>
@@ -722,6 +723,7 @@ function renderStudentDetail(id){
     <div class="grid-3">
       <div><label>签约/交底日期</label><input type="date" data-field="enrollDate" data-student="${stu.id}" value="${stu.dates.enrollDate||''}"></div>
       <div><label>升学节点日期（可选）</label><input type="date" data-field="progressionMilestone" data-student="${stu.id}" value="${stu.dates.progressionMilestone||''}"></div>
+      <div><label>联系方式（手机号/微信等）</label><input type="text" data-field="contact" data-student="${stu.id}" value="${escapeHTML(stu.contact||'')}" placeholder="学生或家长的联系电话/微信等"></div>
     </div>
     ${state.customFieldDefs.length? `<div class="grid-3" style="margin-top:4px;">
       ${state.customFieldDefs.map(f=>`<div><label>${f.label}</label><input type="text" data-customfield="${f.id}" data-student="${stu.id}" value="${(stu.customFields&&stu.customFields[f.id])||''}"></div>`).join('')}
@@ -957,6 +959,7 @@ function modalHTML(){
           <div><label>该学段共几个学期</label><input type="number" id="f-total" min="1" value="${defaultProgram?defaultProgram.totalSemesters:5}"></div>
         </div>
         <label>学校</label><select id="f-schoolid">${state.schools.map(s=>`<option value="${s.id}">${s.name}${s.note?'（'+s.note+'）':''}</option>`).join('')}</select>
+        <label>联系方式（可选，如手机号/微信）</label><input type="text" id="f-contact" placeholder="学生或家长的联系电话/微信等">
         <label>开学日期（可选，稍后也可在档案中补充）</label><input type="date" id="f-termstart">
         ${state.customFieldDefs.length? state.customFieldDefs.map(f=>`<label>${f.label}</label><input type="text" id="f-cf-${f.id}">`).join(''):''}`;
     }
@@ -1263,6 +1266,7 @@ function saveModal(){
         currentSemester: Number(val('f-semester')||1),
         totalSemesters: Number(val('f-total')||5),
         schoolId: val('f-schoolid') || (state.schools[0]||{}).id,
+        contact: val('f-contact')||'',
         stageId: state.stages[0]?.id,
         dates:{enrollDate:todayISO(), termStart: val('f-termstart')||null, progressionMilestone:null},
         taskStatus:{}, assignments:[], alerts:[], spotchecks:[], semesterHistory:[], customFields, adhocTasks:[],
