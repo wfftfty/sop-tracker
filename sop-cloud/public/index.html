@@ -74,7 +74,11 @@ label{display:block;font-size:12px;color:var(--ink-soft);margin:8px 0 3px;}
 input[type=text],input[type=date],input[type=number],select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fcfcfb;color:var(--ink);}
 textarea{resize:vertical;min-height:54px;}
 .field-row{display:flex;gap:10px;}
-.field-row>div{flex:1;}
+.field-row>div{flex:1;position:relative;}
+.name-dropdown{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:8px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.10);}
+.name-dropdown-item{padding:8px 10px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line);}
+.name-dropdown-item:last-child{border-bottom:none;}
+.name-dropdown-item:hover{background:var(--accent-soft);}
 
 /* stamp badge - signature element */
 .stamp{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px dashed var(--stamp-grey);color:var(--stamp-grey);font-size:12px;flex:0 0 26px;transform:rotate(-6deg);}
@@ -486,10 +490,12 @@ function renderDashboard(reminders){
     (ui.searchProgram==='all' || s.programId===ui.searchProgram) &&
     (ui.searchSchool==='all' || s.schoolId===ui.searchSchool)
   ) : [];
-  // 下拉建议：按当前选中的学段/学校筛选出的学生名单，供姓名框下拉选择（也可以直接手动输入）
+  // 下拉建议：按当前选中的学段/学校 + 已输入的关键字，实时筛选出的学生名单
+  const nameQuery = (ui.nameQuery||'').trim().toLowerCase();
   const nameOptions = state.students.filter(s=>
     (ui.searchProgram==='all' || s.programId===ui.searchProgram) &&
-    (ui.searchSchool==='all' || s.schoolId===ui.searchSchool)
+    (ui.searchSchool==='all' || s.schoolId===ui.searchSchool) &&
+    (!nameQuery || s.name.toLowerCase().includes(nameQuery))
   );
   return `
   <div class="grid-3">
@@ -500,7 +506,9 @@ function renderDashboard(reminders){
   <div class="card">
     <div class="section-title"><h3>学生查询</h3></div>
     <div class="field-row">
-      <div><label>按姓名搜索（可从下拉选，也可手动输入）</label><input type="text" id="student-search" list="student-name-options" placeholder="输入或选择学生姓名……" value="${ui.studentSearch||''}"><datalist id="student-name-options">${nameOptions.map(s=>`<option value="${escapeHTML(s.name)}"></option>`).join('')}</datalist></div>
+      <div><label>按姓名搜索</label><input type="text" id="student-search" autocomplete="off" placeholder="点击查看名单，或直接输入姓名……" value="${escapeHTML(ui.studentSearch||'')}">
+        ${ui.nameDropdownOpen? `<div class="name-dropdown">${nameOptions.length? nameOptions.map(s=>`<div class="name-dropdown-item" data-pick-student-name="${escapeHTML(s.name)}">${escapeHTML(s.name)} <span class="subtle">· ${programName(s.programId)} · ${schoolName(s.schoolId)}</span></div>`).join('') : `<div class="name-dropdown-item subtle">没有符合条件的学生</div>`}</div>` : ''}
+      </div>
       <div><label>按学段筛选</label><select id="search-program"><option value="all">全部学段</option>${state.programs.map(p=>`<option value="${p.id}" ${ui.searchProgram===p.id?'selected':''}>${p.name}</option>`).join('')}</select></div>
       <div><label>按学校筛选</label><select id="search-school"><option value="all">全部学校</option>${state.schools.map(s=>`<option value="${s.id}" ${ui.searchSchool===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
     </div>
@@ -1202,6 +1210,8 @@ function bindEvents(){
     // Use composition events so re-rendering mid-keystroke doesn't break IME input (Chinese/Japanese/Korean).
     searchInput.oninput = ()=>{
       ui.studentSearch = searchInput.value;
+      ui.nameQuery = searchInput.value;
+      ui.nameDropdownOpen = true;
       ui.searchFocus = true;
       if(!ui.composing) render();
     };
@@ -1209,11 +1219,36 @@ function bindEvents(){
     searchInput.addEventListener('compositionend', ()=>{
       ui.composing = false;
       ui.studentSearch = searchInput.value;
+      ui.nameQuery = searchInput.value;
       render();
     });
-    searchInput.onblur = ()=>{ ui.searchFocus = false; };
-    if(ui.searchFocus){ searchInput.focus(); const v=searchInput.value; searchInput.setSelectionRange(v.length, v.length); }
+    searchInput.onfocus = ()=>{
+      ui.searchFocus = true;
+      ui.nameDropdownOpen = true;
+      ui.nameQuery = ''; // 每次重新点开，先展示当前学段/学校下的完整名单，不受已选姓名影响
+      ui.selectAllOnFocus = true;
+      render();
+    };
+    searchInput.onblur = ()=>{ ui.searchFocus = false; ui.nameDropdownOpen = false; render(); };
+    if(ui.searchFocus){
+      searchInput.focus();
+      const v=searchInput.value;
+      if(ui.selectAllOnFocus){ searchInput.setSelectionRange(0, v.length); ui.selectAllOnFocus=false; }
+      else{ searchInput.setSelectionRange(v.length, v.length); }
+    }
   }
+  app.querySelectorAll('[data-pick-student-name]').forEach(el=>{
+    // mousedown 阶段阻止默认行为，避免输入框先失焦导致下拉项在 click 触发前就被移除
+    el.onmousedown = (e)=>{ e.preventDefault(); };
+    el.onclick = ()=>{
+      const name = el.dataset.pickStudentName;
+      ui.studentSearch = name;
+      ui.nameQuery = name;
+      ui.nameDropdownOpen = false;
+      ui.searchFocus = false;
+      render();
+    };
+  });
   const searchProgramSel = document.getElementById('search-program');
   if(searchProgramSel) searchProgramSel.onchange = ()=>{ ui.searchProgram = searchProgramSel.value; render(); };
   const searchSchoolSel = document.getElementById('search-school');
