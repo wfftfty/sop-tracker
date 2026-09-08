@@ -1,0 +1,9 @@
+{
+  "name": "sop-tracker-cloud",
+  "version": "1.0.0",
+  "private": true,
+  "description": "新学生全流程 SOP 追踪系统 - 云端存储版（MongoDB Atlas + Netlify Functions）",
+  "dependencies": {
+    "mongodb": "^6.10.0"
+  }
+}

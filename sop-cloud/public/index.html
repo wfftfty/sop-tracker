@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新学生全流程 SOP 追踪系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F3EF;
+  --card:#FFFFFF;
+  --ink:#1E2A32;
+  --ink-soft:#5A6870;
+  --line:#DCE0D8;
+  --accent:#2F6F62;
+  --accent-soft:#E3EEE8;
+  --accent-deep:#1F4E44;
+  --warn:#B9832A;
+  --warn-soft:#F6EAD3;
+  --danger:#AE3A2E;
+  --danger-soft:#F5DFDA;
+  --stamp-grey:#9AA5A0;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.5;}
+h1,h2,h3,h4{font-family:'Source Serif 4',serif;font-weight:600;margin:0 0 8px;color:var(--ink);}
+.mono{font-family:'IBM Plex Mono',monospace;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:13px;}
+
+/* ---- layout ---- */
+#app{display:flex;min-height:100vh;}
+.sidebar{width:220px;flex:0 0 220px;background:var(--ink);color:#EDEFEA;padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar .brand{font-family:'Source Serif 4',serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:2px;}
+.sidebar .brand small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9FB3AB;font-weight:400;letter-spacing:.04em;margin-top:4px;}
+.nav{margin-top:22px;display:flex;flex-direction:column;gap:2px;}
+.nav button{background:none;border:none;color:#C7D0CB;text-align:left;padding:9px 10px;border-radius:6px;font-size:13.5px;display:flex;align-items:center;justify-content:space-between;}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav button.active{background:var(--accent);color:#fff;}
+.nav .badge{background:var(--danger);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;font-family:'IBM Plex Mono',monospace;}
+.main{flex:1;padding:26px 34px 60px;max-width:1180px;}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:20px;flex-wrap:wrap;}
+.topbar .today{font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:12px;}
+.topbar .actions{display:flex;gap:8px;}
+
+/* ---- generic elements ---- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+.card h3{font-size:15px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 13px;border-radius:7px;font-size:13px;font-weight:500;}
+.btn:hover{border-color:var(--accent);color:var(--accent-deep);}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn.primary:hover{background:var(--accent-deep);}
+.btn.danger{border-color:var(--danger);color:var(--danger);background:#fff;}
+.btn.danger:hover{background:var(--danger-soft);}
+.btn.sm{padding:4px 9px;font-size:12px;}
+.btn.ghost{border:none;background:none;color:var(--ink-soft);}
+.btn.ghost:hover{color:var(--accent-deep);}
+
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-family:'IBM Plex Mono',monospace;}
+.pill.role{background:var(--accent-soft);color:var(--accent-deep);}
+.pill.stage{background:#EAEAE3;color:var(--ink-soft);}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top;}
+th{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:11px;letter-spacing:.03em;color:var(--ink-soft);text-transform:uppercase;}
+tr:last-child td{border-bottom:none;}
+
+label{display:block;font-size:12px;color:var(--ink-soft);margin:8px 0 3px;}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fcfcfb;color:var(--ink);}
+textarea{resize:vertical;min-height:54px;}
+.field-row{display:flex;gap:10px;}
+.field-row>div{flex:1;}
+
+/* stamp badge - signature element */
+.stamp{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px dashed var(--stamp-grey);color:var(--stamp-grey);font-size:12px;flex:0 0 26px;transform:rotate(-6deg);}
+.stamp.done{border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+.stamp.warn1{border-style:solid;border-color:var(--warn);color:var(--warn);background:var(--warn-soft);}
+.stamp.warn2{border-style:solid;border-color:var(--danger);color:var(--danger);background:var(--danger-soft);}
+
+.task-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);}
+.task-row:last-child{border-bottom:none;}
+.task-row .tbody{flex:1;}
+.task-row .tname{font-weight:500;}
+.task-row .tmeta{color:var(--ink-soft);font-size:12px;margin-top:2px;}
+.task-row .tdate{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(20,25,22,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+.modal{background:#fff;border-radius:12px;padding:22px 24px;width:520px;max-width:92vw;max-height:86vh;overflow-y:auto;}
+.modal h3{margin-bottom:14px;}
+.modal .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+
+.empty{color:var(--ink-soft);font-size:13px;padding:20px 0;text-align:center;border:1px dashed var(--line);border-radius:8px;}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.subtle{color:var(--ink-soft);font-size:12.5px;}
+.stat{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:var(--ink);}
+.stat-label{font-size:12px;color:var(--ink-soft);}
+select.stage-select{width:auto;display:inline-block;}
+.tag-recurring{background:#EFE7F3;color:#6B4A85;padding:1px 8px;border-radius:20px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.tag-adhoc{background:#FCE9D9;color:#8A4B1F;padding:1px 8px;border-radius:20px;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================= DATA LAYER ============================= */
+const uid = (p)=> p+'_'+Math.random().toString(36).slice(2,9);
+const todayISO = ()=> new Date().toISOString().slice(0,10);
+const addDays=(iso,n)=>{ if(!iso) return null; const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const daysBetween=(a,b)=>{ if(!a||!b) return null; return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/86400000); };
+const fmt=(iso)=> iso? iso : '—';
+
+const DEFAULT_ROLES = [
+  {id:'planner', name:'规划老师'},
+  {id:'academic', name:'教务组'},
+  {id:'tutor', name:'补课老师'},
+  {id:'intern', name:'实习生'},
+  {id:'lifeservice', name:'客服/生活老师'},
+];
+
+const DEFAULT_STAGES = [
+  {id:'s1', order:1, name:'新学生交底与档案建立', en:'Onboarding', trigger:'签约完成，确定加入新学生'},
+  {id:'s2', order:2, name:'新学期', en:'', trigger:'临近开学或新学期进行中，涉及开学准备、补课安排及作业考试管理'},
+  {id:'s3', order:3, name:'补课及常规教学执行', en:'Tutoring & Monitoring', trigger:'课程正式开始'},
+  {id:'s4', order:4, name:'开学后作业与考试过程管理', en:'Academic Tracking', trigger:'学校正式开学'},
+  {id:'s5', order:5, name:'新学段', en:'', trigger:'进入学期中后期或收到升学节点通知'},
+];
+
+// dateField options a task's deadline can be computed relative to
+const DATE_FIELDS = [
+  {id:'enrollDate', label:'签约/交底日期'},
+  {id:'termStart', label:'开学日期'},
+  {id:'progressionMilestone', label:'升学节点日期'},
+];
+
+const DEFAULT_TASKS = [
+  {id:'t1', stageId:'s1', name:'发放教务测试卷并完成学能/英文能力评估', roleId:'academic', deliverable:'《学生学能与英文能力诊断报告》', dateField:'enrollDate', dueOffsetDays:1, reminderLeadDays:0, recurring:null},
+  {id:'t3', stageId:'s1', name:'完成家校交底，记录学生特殊情况归档', deliverable:'档案表"特殊注意事项"栏', roleId:'lifeservice', dateField:'enrollDate', dueOffsetDays:0, reminderLeadDays:0, recurring:null},
+  {id:'t4', stageId:'s1', name:'落实住房安排，出具入住确认单及生活指引', deliverable:'《入住确认单及生活指引》', roleId:'lifeservice', dateField:'termStart', dueOffsetDays:-3, reminderLeadDays:2, recurring:null},
+  {id:'t6', stageId:'s2', name:'接收补课需求，完成资源匹配并发布排课表', deliverable:'《教务排课表》', roleId:'academic', dateField:'termStart', dueOffsetDays:-9, reminderLeadDays:1, recurring:null},
+  {id:'t7', stageId:'s3', name:'课前提醒（提前15分钟发布）', deliverable:'实习群提醒记录', roleId:'intern', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'daily-class'}},
+  {id:'t8', stageId:'s3', name:'异常考勤预警：学生未到课30分钟内通报+联系家长', deliverable:'预警通报+通话留痕', roleId:'intern', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'event'}},
+  {id:'t9', stageId:'s3', name:'当天布置作业，隔天完成批改并登记成绩', deliverable:'作业批改记录', roleId:'tutor', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'daily-class'}},
+  {id:'t10', stageId:'s3', name:'周日发放周测，周一完成批改汇总', deliverable:'周测成绩汇总', roleId:'academic', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'weekly', days:[0,1]}},
+  {id:'t11', stageId:'s3', name:'输出阶段性课后反馈报告并同步家长群', deliverable:'《阶段性课后反馈报告》', roleId:'academic', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'weekly', days:[5]}},
+  {id:'t12', stageId:'s4', name:'收集各科Syllabus，汇总学期作业与考试总时间表', deliverable:'《学期作业与考试总时间表》', roleId:'academic', dateField:'termStart', dueOffsetDays:7, reminderLeadDays:2, recurring:null},
+  {id:'t14', stageId:'s4', name:'输出作业辅导人员分配表', deliverable:'《作业辅导人员分配表》', roleId:'academic', dateField:'termStart', dueOffsetDays:7, reminderLeadDays:2, recurring:null},
+  // 规划老师 · 新学期 SOP
+  {id:'t20', stageId:'s2', name:'开学时间通知', deliverable:'开学时间通知记录', roleId:'planner', dateField:'termStart', dueOffsetDays:-14, reminderLeadDays:3, recurring:null},
+  {id:'t21', stageId:'s2', name:'课程表', deliverable:'《课程表》', roleId:'planner', dateField:'termStart', dueOffsetDays:-10, reminderLeadDays:2, recurring:null},
+  {id:'t22', stageId:'s2', name:'预习/补课规划会', deliverable:'预习/补课规划会纪要', roleId:'planner', dateField:'termStart', dueOffsetDays:-10, reminderLeadDays:3, recurring:null},
+  {id:'t23', stageId:'s2', name:'确认学校作业完成方式', deliverable:'档案更新记录', roleId:'planner', dateField:'termStart', dueOffsetDays:7, reminderLeadDays:2, recurring:null},
+  {id:'t24', stageId:'s2', name:'公布新学期开学月份及作业考试时间节点', deliverable:'群通知记录', roleId:'planner', dateField:'termStart', dueOffsetDays:-14, reminderLeadDays:0, recurring:null},
+  {id:'t25', stageId:'s2', name:'发出补课课程表', deliverable:'《补课课程表》', roleId:'planner', dateField:'termStart', dueOffsetDays:-7, reminderLeadDays:2, recurring:null},
+  {id:'t26', stageId:'s2', name:'考前提醒', deliverable:'考前提醒记录', roleId:'planner', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'event'}},
+  {id:'t27', stageId:'s2', name:'记录成绩', deliverable:'成绩记录', roleId:'planner', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'event'}},
+  // 规划老师 · 新学段 SOP
+  {id:'t28', stageId:'s5', name:'一对一升学规划会', deliverable:'升学规划会议纪要', roleId:'planner', dateField:'progressionMilestone', dueOffsetDays:-14, reminderLeadDays:3, recurring:null},
+  {id:'t29', stageId:'s5', name:'提交报名表格', deliverable:'报名表格提交凭证', roleId:'planner', dateField:'progressionMilestone', dueOffsetDays:-10, reminderLeadDays:3, recurring:null},
+  {id:'t30', stageId:'s5', name:'接受合约', deliverable:'已签署合约', roleId:'planner', dateField:'progressionMilestone', dueOffsetDays:-8, reminderLeadDays:2, recurring:null},
+  {id:'t31', stageId:'s5', name:'申请学生证', deliverable:'学生证申请记录', roleId:'planner', dateField:'progressionMilestone', dueOffsetDays:-5, reminderLeadDays:2, recurring:null},
+  {id:'t32', stageId:'s5', name:'交学费', deliverable:'学费缴纳凭证', roleId:'planner', dateField:'progressionMilestone', dueOffsetDays:-5, reminderLeadDays:2, recurring:null},
+  {id:'t33', stageId:'s5', name:'预约学生证', deliverable:'学生证预约记录', roleId:'planner', dateField:'progressionMilestone', dueOffsetDays:0, reminderLeadDays:1, recurring:null},
+  // 生活老师（客服/生活老师）· 常规
+  {id:'t34', stageId:'s3', name:'每周学生出勤记录', deliverable:'学生出勤记录表', roleId:'lifeservice', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'weekly', days:[1]}},
+  {id:'t35', stageId:'s3', name:'每周学生情况询问', deliverable:'学生情况跟进记录', roleId:'lifeservice', dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:{type:'weekly', days:[5]}},
+];
+
+const DEFAULT_PROGRAMS = [ // 学段
+  {id:'lang', name:'语言课', totalSemesters:5},
+  {id:'foundation', name:'预科', totalSemesters:5},
+  {id:'iy1', name:'国际大一', totalSemesters:5},
+  {id:'undergrad', name:'本科', totalSemesters:5},
+];
+
+const DEFAULT_SCHOOLS = [ // 学校
+  {id:'sim', name:'SIM', note:'每学期 12 周测'},
+  {id:'kaplan', name:'Kaplan', note:''},
+  {id:'psb', name:'PSB Academy', note:''},
+  {id:'amity', name:'Amity', note:''},
+];
+
+const WEEKDAY_NAMES=['周日','周一','周二','周三','周四','周五','周六'];
+
+function seedState(){
+  return {
+    roles: JSON.parse(JSON.stringify(DEFAULT_ROLES)),
+    stages: JSON.parse(JSON.stringify(DEFAULT_STAGES)),
+    tasks: JSON.parse(JSON.stringify(DEFAULT_TASKS)),
+    programs: JSON.parse(JSON.stringify(DEFAULT_PROGRAMS)),
+    schools: JSON.parse(JSON.stringify(DEFAULT_SCHOOLS)),
+    customFieldDefs: [],
+    students: [
+      {id:'stu_demo', name:'示例学生 · 张三', programId:'iy1', currentSemester:1, totalSemesters:5, schoolId:'kaplan', stageId:'s2',
+       dates:{enrollDate: addDays(todayISO(),-10), termStart: addDays(todayISO(),12), progressionMilestone:null},
+       taskStatus:{}, assignments:[
+         {id:uid('asg'), name:'Business Report Draft', dueDate: addDays(todayISO(),4), progress:30, done:false}
+       ], alerts:[], spotchecks:[], semesterHistory:[], customFields:{}, adhocTasks:[]}
+    ],
+    adhocReminders: [],
+  };
+}
+
+/* ============================= CLOUD SYNC (MongoDB Atlas via Netlify Functions) ============================= */
+const API_URL = '/api/state';
+function getToken(){ return localStorage.getItem('sop_api_token') || ''; }
+function setToken(t){ localStorage.setItem('sop_api_token', (t||'').trim()); }
+
+let state = null; // populated by initApp() before first render()
+let saveTimer = null;
+
+function persist(){
+  render();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToServer, 500);
+}
+
+async function saveToServer(){
+  try{
+    const res = await fetch(API_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+getToken() },
+      body: JSON.stringify(state)
+    });
+    if(res.status===401){ showInfo('访问密钥不正确，本次修改未能保存到云端，请刷新页面重新输入密钥'); }
+    else if(!res.ok){ showInfo('保存到云端失败，请检查网络后重试'); }
+  }catch(e){ showInfo('保存到云端失败，请检查网络后重试'); }
+}
+
+async function loadStateFromServer(){
+  const res = await fetch(API_URL, { headers:{ 'Authorization':'Bearer '+getToken() } });
+  if(res.status===401){ const e=new Error('unauthorized'); e.code=401; throw e; }
+  if(!res.ok){ throw new Error('load failed: '+res.status); }
+  return res.json();
+}
+
+async function initApp(){
+  app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#5A6870;font-family:'IBM Plex Sans',sans-serif;">正在连接云端数据库…</div>`;
+  if(!getToken()){
+    const t = window.prompt('请输入访问密钥（与 Netlify 环境变量 API_TOKEN 一致）：') || '';
+    setToken(t);
+  }
+  try{
+    const data = await loadStateFromServer();
+    state = data || seedState();
+    if(!data){ await saveToServer(); } // 首次运行：把默认数据写入数据库
+    render();
+  }catch(err){
+    if(err.code===401){
+      localStorage.removeItem('sop_api_token');
+      app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#AE3A2E;font-family:'IBM Plex Sans',sans-serif;">访问密钥不正确。<br><br><button onclick="location.reload()" style="padding:8px 16px;">刷新重试</button></div>`;
+    } else {
+      app.innerHTML = `<div style="padding:60px 20px;text-align:center;color:#AE3A2E;font-family:'IBM Plex Sans',sans-serif;">无法连接云端数据库，请检查网络连接。<br><br><button onclick="location.reload()" style="padding:8px 16px;">重试</button></div>`;
+    }
+  }
+}
+
+/* ============================= DERIVED / COMPUTATION ============================= */
+function roleName(id){ const r=state.roles.find(r=>r.id===id); return r? r.name : '未分配'; }
+function stageName(id){ const s=state.stages.find(s=>s.id===id); return s? s.name : '—'; }
+function programName(id){ const p=state.programs.find(p=>p.id===id); return p? p.name : '未设置'; }
+function schoolName(id){ const s=state.schools.find(s=>s.id===id); return s? s.name : '未设置'; }
+function taskDueDate(task, student){
+  if(!task.dateField || task.dueOffsetDays===null || task.dueOffsetDays===undefined) return null;
+  const base = student.dates[task.dateField];
+  if(!base) return null;
+  return addDays(base, task.dueOffsetDays);
+}
+function taskStatusFor(task, student){
+  const ts = student.taskStatus[task.id];
+  if(ts && ts.done) return {state:'done', date: ts.date};
+  const due = taskDueDate(task, student);
+  if(!due) return {state:'pending', due:null};
+  const d = daysBetween(todayISO(), due);
+  if(d < 0) return {state:'overdue', due, daysOver:-d};
+  if(task.reminderLeadDays!=null && d<=task.reminderLeadDays) return {state:'due-soon', due, daysLeft:d};
+  return {state:'pending', due, daysLeft:d};
+}
+function isRecurringDueToday(task){
+  if(!task.recurring) return false;
+  const dow = new Date().getDay();
+  if(task.recurring.type==='daily-class') return true; // shown as standing daily checklist item
+  if(task.recurring.type==='weekly') return task.recurring.days.includes(dow);
+  if(task.recurring.type==='event') return false; // only appears when manually triggered
+  return false;
+}
+function studentAssignmentAlerts(student){
+  const out=[];
+  (student.assignments||[]).forEach(a=>{
+    if(a.done) return;
+    const d = daysBetween(todayISO(), a.dueDate);
+    if(d!=null && d<=5 && (a.progress||0)<50){
+      out.push({level:1, text:`「${a.name}」距截止 ${d<0? '已逾期'+(-d)+'天' : d+'天'}，进度仅 ${a.progress||0}%`, assignmentId:a.id});
+    }
+  });
+  return out;
+}
+/* ---- semester / program progression ---- */
+function studentDeptSummary(stu){
+  return state.roles.map(r=>{
+    const relevant = state.tasks.filter(t=>!t.recurring && t.roleId===r.id);
+    const done = relevant.filter(t=> stu.taskStatus[t.id] && stu.taskStatus[t.id].done).length;
+    return {role:r, total:relevant.length, done};
+  });
+}
+function advanceSemester(stu){
+  const relevantTasks = state.tasks.filter(t=>!t.recurring);
+  const completed = relevantTasks.filter(t=> stu.taskStatus[t.id] && stu.taskStatus[t.id].done)
+    .map(t=>({taskId:t.id, name:t.name, roleId:t.roleId, doneDate:(stu.taskStatus[t.id]||{}).date}));
+  const pending = relevantTasks.filter(t=> !(stu.taskStatus[t.id] && stu.taskStatus[t.id].done))
+    .map(t=>({taskId:t.id, name:t.name, roleId:t.roleId}));
+  stu.semesterHistory = stu.semesterHistory || [];
+  stu.semesterHistory.unshift({
+    programId: stu.programId, semester: stu.currentSemester, schoolId: stu.schoolId,
+    termStart: stu.dates.termStart, archivedAt: todayISO(),
+    completed, pending,
+    assignments: JSON.parse(JSON.stringify(stu.assignments||[])),
+    completionRate: relevantTasks.length ? Math.round(completed.length/relevantTasks.length*100) : 100,
+  });
+  stu.taskStatus = {};
+  stu.assignments = [];
+  stu.alerts = (stu.alerts||[]).filter(a=>!a.resolved);
+  stu.stageId = (state.stages.slice().sort((a,b)=>a.order-b.order)[0]||{}).id;
+  stu.dates.termStart = null;
+  stu.dates.progressionMilestone = null;
+  if(stu.currentSemester < stu.totalSemesters){
+    stu.currentSemester += 1;
+    stu.awaitingProgramUpgrade = false;
+  } else {
+    stu.awaitingProgramUpgrade = true; // finished all semesters of this program, needs manual program change
+  }
+}
+function todaysReminders(){
+  const items=[];
+  state.students.forEach(stu=>{
+    state.tasks.forEach(task=>{
+      if(task.recurring){
+        return; // 日常/常规职责不在提醒中心展示，如需跟进请自行管理
+      }
+      const st = taskStatusFor(task, stu);
+      if(st.state==='due-soon' || st.state==='overdue'){
+        items.push({type: st.state, student:stu, task, due:st.due, role:task.roleId});
+      }
+    });
+    studentAssignmentAlerts(stu).forEach(al=>{
+      items.push({type:'assignment-warn1', student:stu, label:al.text});
+    });
+    (stu.alerts||[]).filter(a=>!a.resolved).forEach(a=>{
+      items.push({type:'attendance-warn2', student:stu, label:`【${a.date}】${a.note||'考勤异常，待家长跟进确认'}`, alertId:a.id});
+    });
+  });
+  state.adhocReminders.filter(r=>!r.sent && r.targetDate<=todayISO()).forEach(r=>{
+    items.push({type:'adhoc', label:r.title, role:r.roleId, id:r.id, message:r.message});
+  });
+  return items;
+}
+
+/* ============================= APP STATE (UI) ============================= */
+let ui = { tab:'dashboard', openStudent:null, modal:null };
+
+/* ============================= RENDER ============================= */
+const app = document.getElementById('app');
+
+function render(){
+  const reminders = todaysReminders();
+  app.innerHTML = `
+    <div class="sidebar">
+      <div class="brand">新学生 SOP 追踪系统<small>标准化 · 可配置 · 全流程留痕</small></div>
+      <div class="nav">
+        ${navBtn('dashboard','总览')}
+        ${navBtn('students','学生档案')}
+        ${navBtn('reminders','提醒中心', reminders.length)}
+        ${navBtn('config','环节与任务配置')}
+        ${navBtn('data','数据管理')}
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div>
+          <h1>${tabTitle()}</h1>
+          <div class="today mono">今日 ${todayISO()}　·　学生数 ${state.students.length}　·　待处理提醒 ${reminders.length}</div>
+        </div>
+        <div class="actions">${topActions()}</div>
+      </div>
+      ${tabBody(reminders)}
+    </div>
+    ${ui.modal ? modalHTML() : ''}
+    ${ui.toast ? `<div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 4px 16px rgba(0,0,0,.2);">${escapeHTML(ui.toast)}</div>` : ''}
+  `;
+  bindEvents();
+}
+
+function navBtn(id,label,count){
+  return `<button data-nav="${id}" class="${ui.tab===id?'active':''}">${label}${count?`<span class="badge">${count}</span>`:''}</button>`;
+}
+function tabTitle(){
+  return {dashboard:'总览',students:'学生档案',reminders:'提醒中心',config:'环节与任务配置',data:'数据管理'}[ui.tab];
+}
+function topActions(){
+  if(ui.tab==='dashboard') return `<button class="btn primary" data-action="export-ics-all">📅 导出全部待办到日历(.ics)</button>`;
+  if(ui.tab==='students') return `<button class="btn primary" data-action="new-student">+ 新增学生</button>`;
+  if(ui.tab==='config') return `<button class="btn primary" data-action="new-stage">+ 新增环节</button><button class="btn" data-action="new-task">+ 新增任务</button>`;
+  return '';
+}
+
+function tabBody(reminders){
+  if(ui.tab==='dashboard') return renderDashboard(reminders);
+  if(ui.tab==='students') return ui.openStudent ? renderStudentDetail(ui.openStudent) : renderStudentsList();
+  if(ui.tab==='reminders') return renderReminders(reminders);
+  if(ui.tab==='config') return renderConfig();
+  if(ui.tab==='data') return renderData();
+  return '';
+}
+
+/* ---------- Dashboard (department board) ---------- */
+function pendingForRole(roleId){
+  const out=[];
+  state.students.forEach(stu=>{
+    state.tasks.filter(t=>!t.recurring && t.roleId===roleId).forEach(t=>{
+      const st = taskStatusFor(t, stu);
+      if(st.state!=='done') out.push({student:stu, task:t, status:st});
+    });
+  });
+  const rank = {overdue:0,'due-soon':1,pending:2};
+  out.sort((a,b)=> (rank[a.status.state]-rank[b.status.state]) || ((a.status.daysLeft??999)-(b.status.daysLeft??999)) );
+  return out;
+}
+function completedForRole(roleId){
+  const out=[];
+  state.students.forEach(stu=>{
+    state.tasks.filter(t=>!t.recurring && t.roleId===roleId).forEach(t=>{
+      const ts = stu.taskStatus[t.id];
+      if(ts && ts.done) out.push({student:stu, task:t, date:ts.date});
+    });
+  });
+  out.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  return out;
+}
+function allAdhocTasks(){
+  const out=[];
+  state.students.forEach(stu=>{
+    (stu.adhocTasks||[]).forEach(t=> out.push({student:stu, task:t}));
+  });
+  out.sort((a,b)=> (a.task.done - b.task.done) || ((a.task.dueDate||'9999-99-99').localeCompare(b.task.dueDate||'9999-99-99')));
+  return out;
+}
+function groupItemsByStage(items){
+  const bySid = {};
+  items.forEach(it=>{
+    const sid = it.task.stageId || '__none__';
+    (bySid[sid] = bySid[sid]||[]).push(it);
+  });
+  const rank = {overdue:0,'due-soon':1,pending:2};
+  const sortItems = arr => arr.slice().sort((a,b)=> (rank[a.status.state]-rank[b.status.state]) || ((a.status.daysLeft??999)-(b.status.daysLeft??999)));
+  const orderedStages = state.stages.slice().sort((a,b)=>a.order-b.order);
+  const groups = orderedStages.filter(s=>bySid[s.id]).map(s=>({label:s.name, items: sortItems(bySid[s.id])}));
+  if(bySid['__none__']) groups.push({label:'未分配环节', items: sortItems(bySid['__none__'])});
+  return groups;
+}
+function roleWarnItems(roleId){
+  // Assignment progress warnings surface to whichever role owns 作业/考试跟进 (academic by SOP), attendance warnings to intern by SOP.
+  const out=[];
+  if(roleId==='academic'){
+    state.students.forEach(stu=> studentAssignmentAlerts(stu).forEach(al=> out.push({student:stu, text:al.text})));
+  }
+  if(roleId==='intern'){
+    state.students.forEach(stu=> (stu.alerts||[]).filter(a=>!a.resolved).forEach(a=> out.push({student:stu, alertId:a.id, text:`${a.date} · ${a.note||'考勤异常，待跟进'}`})));
+  }
+  return out;
+}
+function renderDashboard(reminders){
+  const warn1 = reminders.filter(r=>r.type==='assignment-warn1').length;
+  const warn2 = reminders.filter(r=>r.type==='attendance-warn2').length;
+  const overdue = reminders.filter(r=>r.type==='overdue').length;
+  if(!ui.dashboardRole) ui.dashboardRole='all';
+  ui.historyOpen = ui.historyOpen || {};
+  if(!ui.searchProgram) ui.searchProgram='all';
+  if(!ui.searchSchool) ui.searchSchool='all';
+  const q = (ui.studentSearch||'').trim().toLowerCase();
+  const hasFilter = q || ui.searchProgram!=='all' || ui.searchSchool!=='all';
+  const matched = hasFilter? state.students.filter(s=>
+    (!q || s.name.toLowerCase().includes(q)) &&
+    (ui.searchProgram==='all' || s.programId===ui.searchProgram) &&
+    (ui.searchSchool==='all' || s.schoolId===ui.searchSchool)
+  ) : [];
+  return `
+  <div class="grid-3">
+    <div class="card"><div class="stat">${state.students.length}</div><div class="stat-label">在档学生</div></div>
+    <div class="card"><div class="stat" style="color:${overdue?'var(--danger)':'var(--ink)'}">${overdue}</div><div class="stat-label">逾期未完成事项</div></div>
+    <div class="card"><div class="stat" style="color:${(warn1+warn2)?'var(--warn)':'var(--ink)'}">${warn1+warn2}</div><div class="stat-label">一/二级预警（作业 ${warn1} · 考勤 ${warn2}）</div></div>
+  </div>
+  <div class="card">
+    <div class="section-title"><h3>学生查询</h3></div>
+    <div class="field-row">
+      <div><label>按姓名搜索</label><input type="text" id="student-search" placeholder="输入学生姓名……" value="${ui.studentSearch||''}"></div>
+      <div><label>按学段筛选</label><select id="search-program"><option value="all">全部学段</option>${state.programs.map(p=>`<option value="${p.id}" ${ui.searchProgram===p.id?'selected':''}>${p.name}</option>`).join('')}</select></div>
+      <div><label>按学校筛选</label><select id="search-school"><option value="all">全部学校</option>${state.schools.map(s=>`<option value="${s.id}" ${ui.searchSchool===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+    </div>
+    ${hasFilter? (matched.length? matched.map(stu=>{
+      const dept = studentDeptSummary(stu);
+      return `<div class="task-row" style="align-items:center;">
+        <div class="tbody">
+          <div class="tname">${stu.name} <span class="subtle">· ${programName(stu.programId)} 第${stu.currentSemester}/${stu.totalSemesters}学期 · ${schoolName(stu.schoolId)}</span></div>
+          <div class="tmeta">${dept.map(d=>`${d.role.name} ${d.done}/${d.total}`).join('　·　')}</div>
+        </div>
+        <button class="btn sm primary" data-action="open-student" data-id="${stu.id}">打开档案</button>
+      </div>`;
+    }).join('') : '<div class="empty">没有找到匹配的学生。</div>') : ''}
+  </div>
+  <div class="card">
+    <div class="section-title"><h3>临时任务 <span class="subtle mono">${allAdhocTasks().filter(x=>!x.task.done).length} 项未完成</span></h3><button class="btn sm primary" data-action="new-temptask">+ 添加临时任务</button></div>
+    <p class="subtle">为单个学生添加的临时任务只属于该学生，不会同步到其他学生档案。</p>
+    ${allAdhocTasks().length? allAdhocTasks().map(x=>`<div class="task-row">
+        <span class="stamp ${x.task.done?'done':(x.task.dueDate && x.task.dueDate<todayISO() ?'warn2':'')}">${x.task.done?'✓':'○'}</span>
+        <div class="tbody">
+          <div class="tname">${x.student.name} · ${escapeHTML(x.task.name)}</div>
+          <div class="tmeta"><span class="tag-adhoc">临时任务</span> ${x.task.dueDate?`截止 <span class="tdate">${x.task.dueDate}</span>`:''}</div>
+        </div>
+        <button class="btn sm ${x.task.done?'':'primary'}" data-action="toggle-temptask" data-student="${x.student.id}" data-temptask="${x.task.id}">${x.task.done?'撤销完成':'标记完成'}</button>
+        <button class="btn sm danger" data-action="delete-temptask" data-student="${x.student.id}" data-temptask="${x.task.id}">删除</button>
+      </div>`).join('') : '<div class="empty">暂无临时任务。</div>'}
+  </div>
+  <div class="card" style="padding-bottom:8px;">
+    <div class="section-title"><h3>按部门看板 · 未完成 SOP 事项</h3></div>
+    <div class="nav" style="flex-direction:row;flex-wrap:wrap;gap:6px;margin-top:0;">
+      <button data-role-tab="all" class="btn sm ${ui.dashboardRole==='all'?'primary':''}">全部部门</button>
+      ${state.roles.map(r=>`<button data-role-tab="${r.id}" class="btn sm ${ui.dashboardRole===r.id?'primary':''}">${r.name}</button>`).join('')}
+    </div>
+  </div>
+  ${(ui.dashboardRole==='all'? state.roles.map(r=>r.id) : [ui.dashboardRole]).map(roleBoardCard).join('')}
+  `;
+}
+function roleBoardCard(roleId){
+  const pending = pendingForRole(roleId);
+  const warns = roleWarnItems(roleId);
+  const showHistory = !!ui.historyOpen[roleId];
+  const completed = showHistory ? completedForRole(roleId) : [];
+  return `<div class="card">
+    <div class="section-title">
+      <h3>${roleName(roleId)} <span class="subtle mono">未完成 ${pending.length}${warns.length?` · 预警 ${warns.length}`:''}</span></h3>
+      <div style="display:flex;gap:6px;">
+        <button class="btn sm" data-action="export-ics-role" data-role="${roleId}">📅 导出本部门日历</button>
+        <button class="btn sm ghost" data-action="toggle-history" data-role="${roleId}">${showHistory?'收起历史':'查看历史记录'}</button>
+      </div>
+    </div>
+    ${warns.length? `<div style="margin-bottom:6px;">${warns.map(w=>`<div class="task-row"><span class="stamp warn2">!</span><div class="tbody"><div class="tname">预警 · ${w.student.name}</div><div class="tmeta">${w.text}</div></div>${w.alertId?`<button class="btn sm" data-action="resolve-alert" data-student="${w.student.id}" data-alert="${w.alertId}">标记已跟进</button>`:`<button class="btn sm" data-action="open-student" data-id="${w.student.id}">查看学生</button>`}</div>`).join('')}</div>`:''}
+    ${pending.length? groupItemsByStage(pending).map(g=>`
+      <h4 style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">${escapeHTML(g.label)}</h4>
+      ${g.items.map(p=>`<div class="task-row">
+        <span class="stamp ${p.status.state==='overdue'?'warn2':p.status.state==='due-soon'?'warn1':''}">${p.status.state==='overdue'?'!':p.status.state==='due-soon'?'△':'○'}</span>
+        <div class="tbody"><div class="tname">${p.student.name} · ${p.task.name}</div>
+        <div class="tmeta">产出：${p.task.deliverable||'—'} ${p.status.due?`· 截止 <span class="tdate">${p.status.due}</span>`:''}</div></div>
+        <button class="btn sm primary" data-action="toggle-task" data-student="${p.student.id}" data-task="${p.task.id}">标记完成</button>
+      </div>`).join('')}`).join('') : '<div class="empty">该部门当前没有未完成事项。</div>'}
+    ${showHistory? `<h4 style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">历史记录（已完成）</h4>
+      ${completed.length? completed.map(c=>`<div class="task-row"><span class="stamp done">✓</span><div class="tbody"><div class="tname">${c.student.name} · ${c.task.name}</div><div class="tmeta">完成于 ${c.date}</div></div></div>`).join('') : '<div class="empty">暂无历史记录。</div>'}` : ''}
+  </div>`;
+}
+
+/* ---------- ICS calendar export ---------- */
+function icsEscape(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+function icsNow(){ return new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; }
+function buildICS(events){
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//AW Education International//SOP Tracking//CN','CALSCALE:GREGORIAN'];
+  events.forEach(ev=>{
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:'+ev.uid+'@sop-tracking.local');
+    lines.push('DTSTAMP:'+icsNow());
+    lines.push('DTSTART:'+ev.date.replace(/-/g,'')+'T090000');
+    lines.push('DTEND:'+ev.date.replace(/-/g,'')+'T093000');
+    lines.push('SUMMARY:'+icsEscape(ev.summary));
+    if(ev.description) lines.push('DESCRIPTION:'+icsEscape(ev.description));
+    lines.push('BEGIN:VALARM');
+    lines.push('ACTION:DISPLAY');
+    lines.push('DESCRIPTION:SOP 提醒');
+    lines.push('TRIGGER:-P1D');
+    lines.push('END:VALARM');
+    lines.push('BEGIN:VALARM');
+    lines.push('ACTION:DISPLAY');
+    lines.push('DESCRIPTION:SOP 提醒');
+    lines.push('TRIGGER:PT0M');
+    lines.push('END:VALARM');
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+function collectPendingEvents(roleFilter){
+  const events=[];
+  state.students.forEach(stu=>{
+    state.tasks.filter(t=>!t.recurring && (!roleFilter || t.roleId===roleFilter)).forEach(t=>{
+      const st = taskStatusFor(t, stu);
+      if(st.state!=='done' && st.due){
+        events.push({uid:`task-${t.id}-${stu.id}`, date:st.due, summary:`[SOP] ${stu.name} · ${t.name}`, description:`责任人：${roleName(t.roleId)}\n产出：${t.deliverable||''}\n环节：${stageName(t.stageId)}`});
+      }
+    });
+    (stu.assignments||[]).forEach(a=>{
+      if(!a.done && a.dueDate && (!roleFilter || roleFilter==='academic')){
+        events.push({uid:`asg-${a.id}`, date:a.dueDate, summary:`[作业/考试] ${stu.name} · ${a.name}`, description:`当前进度 ${a.progress||0}%`});
+      }
+    });
+  });
+  state.adhocReminders.filter(r=>!r.sent && (!roleFilter || r.roleId===roleFilter)).forEach(r=>{
+    events.push({uid:`adhoc-${r.id}`, date:r.targetDate, summary:`[提醒] ${r.title}`, description:r.message||''});
+  });
+  return events;
+}
+function escapeHTML(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function downloadICS(events, filename){
+  if(!events.length){ showInfo('当前没有可导出的待办事项。'); return; }
+  showExportModal(buildICS(events), filename, 'text/calendar');
+}
+function showInfo(message){
+  ui.toast = message;
+  render();
+  setTimeout(()=>{ if(ui.toast===message){ ui.toast=null; render(); } }, 3000);
+}
+function showConfirm(message, onConfirm){
+  ui.modal = {type:'confirm', data:{message}, onConfirm};
+  render();
+}
+function showExportModal(content, filename, mime){
+  let url=null;
+  try{ url = URL.createObjectURL(new Blob([content], {type:mime})); }catch(e){ console.error(e); }
+  ui.modal = {type:'export', data:{filename, content, mime, url}};
+  render();
+}
+
+function reminderRowHTML(r){
+  const typeMeta = {
+    'due-soon': {label:'即将到期', cls:'warn1'},
+    'overdue': {label:'已逾期', cls:'warn2'},
+    'recurring': {label:'常规提醒', cls:''},
+    'assignment-warn1': {label:'一级预警·作业进度', cls:'warn1'},
+    'attendance-warn2': {label:'二级预警·考勤', cls:'warn2'},
+    'adhoc': {label:'自定义提醒', cls:'warn1'},
+  }[r.type];
+  const who = r.student ? `${r.student.name}` : '';
+  const roleLabel = r.role ? roleName(r.role) : (r.role===undefined?'':'');
+  const title = r.task ? r.task.name : r.label;
+  return `<div class="task-row">
+    <span class="stamp ${typeMeta.cls}">${typeMeta.cls==='warn2'?'!':typeMeta.cls==='warn1'?'△':'○'}</span>
+    <div class="tbody">
+      <div class="tname">${title}</div>
+      <div class="tmeta">${typeMeta.label}${who?' · 学生：'+who:''}${roleLabel?' · 责任人：'+roleLabel:''}${r.due?' · 截止 '+r.due:''}</div>
+    </div>
+    ${r.alertId?`<button class="btn sm" data-action="resolve-alert" data-student="${r.student.id}" data-alert="${r.alertId}">标记已跟进</button>`:''}
+    ${r.id?`<button class="btn sm" data-action="mark-sent" data-id="${r.id}">标记已发送</button>`:''}
+  </div>`;
+}
+
+/* ---------- Students list ---------- */
+function renderStudentsList(){
+  if(!state.students.length) return `<div class="empty">暂无学生档案，点击右上角"+ 新增学生"开始建档。</div>`;
+  return `<div class="card"><table>
+    <thead><tr><th>姓名</th><th>学段</th><th>学期</th><th>学校</th><th>当前环节</th><th>开学日期</th><th>预警</th><th></th></tr></thead>
+    <tbody>
+    ${state.students.map(stu=>{
+      const alerts = studentAssignmentAlerts(stu).length + (stu.alerts||[]).filter(a=>!a.resolved).length;
+      return `<tr>
+        <td><b>${stu.name}</b></td>
+        <td>${programName(stu.programId)}</td>
+        <td class="mono">${stu.currentSemester||'—'} / ${stu.totalSemesters||'—'}</td>
+        <td>${schoolName(stu.schoolId)}</td>
+        <td><span class="pill stage">${stageName(stu.stageId)}</span></td>
+        <td class="mono">${fmt(stu.dates.termStart)}</td>
+        <td>${alerts? `<span class="stamp warn1" style="width:20px;height:20px;font-size:10px;">${alerts}</span>` : '—'}</td>
+        <td><button class="btn sm" data-action="open-student" data-id="${stu.id}">打开档案</button>
+            <button class="btn sm danger" data-action="delete-student" data-id="${stu.id}">删除</button></td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+function renderStudentDetail(id){
+  const stu = state.students.find(s=>s.id===id);
+  if(!stu){ ui.openStudent=null; return renderStudentsList(); }
+  const tasksForStage = state.tasks.filter(t=>!t.recurring);
+  const alerts1 = studentAssignmentAlerts(stu);
+  const alerts2 = (stu.alerts||[]).filter(a=>!a.resolved);
+  const dept = studentDeptSummary(stu);
+  return `
+  <button class="btn ghost sm" data-action="back-students">← 返回学生列表</button>
+  <div class="card">
+    <div class="section-title">
+      <h3>${stu.name} <span class="subtle">${programName(stu.programId)} · 第${stu.currentSemester||'—'}/${stu.totalSemesters||'—'}学期 · ${schoolName(stu.schoolId)}</span></h3>
+      <div><button class="btn sm" data-action="edit-student" data-id="${stu.id}">编辑姓名</button></div>
+    </div>
+    <div class="grid-3">
+      <div><label>学段</label>
+        <select data-field="programId" data-student="${stu.id}" style="width:100%">
+        ${state.programs.map(p=>`<option value="${p.id}" ${stu.programId===p.id?'selected':''}>${p.name}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>当前学期</label><input type="number" min="1" data-field="currentSemester" data-student="${stu.id}" value="${stu.currentSemester||1}"></div>
+      <div><label>该学段共几个学期</label><input type="number" min="1" data-field="totalSemesters" data-student="${stu.id}" value="${stu.totalSemesters||1}"></div>
+    </div>
+    <div class="grid-3">
+      <div><label>学校</label>
+        <select data-field="schoolId" data-student="${stu.id}" style="width:100%">
+        ${state.schools.map(s=>`<option value="${s.id}" ${stu.schoolId===s.id?'selected':''}>${s.name}${s.note?' · '+s.note:''}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>当前环节（SOP 服务流程）</label>
+        <select class="stage-select" data-field="stageId" data-student="${stu.id}" style="width:100%">
+        ${state.stages.sort((a,b)=>a.order-b.order).map(s=>`<option value="${s.id}" ${stu.stageId===s.id?'selected':''}>环节${s.order} · ${s.name}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>开学日期（可选）</label><input type="date" data-field="termStart" data-student="${stu.id}" value="${stu.dates.termStart||''}"></div>
+    </div>
+    <div class="grid-3">
+      <div><label>签约/交底日期</label><input type="date" data-field="enrollDate" data-student="${stu.id}" value="${stu.dates.enrollDate||''}"></div>
+      <div><label>升学节点日期（可选）</label><input type="date" data-field="progressionMilestone" data-student="${stu.id}" value="${stu.dates.progressionMilestone||''}"></div>
+    </div>
+    ${state.customFieldDefs.length? `<div class="grid-3" style="margin-top:4px;">
+      ${state.customFieldDefs.map(f=>`<div><label>${f.label}</label><input type="text" data-customfield="${f.id}" data-student="${stu.id}" value="${(stu.customFields&&stu.customFields[f.id])||''}"></div>`).join('')}
+    </div>`:''}
+    <div class="modal-actions" style="justify-content:flex-start;margin-top:14px;">
+      <button class="btn primary" data-action="advance-semester" data-student="${stu.id}">完成本学期 → 进入下一学期</button>
+    </div>
+    ${stu.awaitingProgramUpgrade? `<div class="task-row" style="margin-top:10px;border-top:1px dashed var(--warn);padding-top:10px;">
+      <span class="stamp warn1">△</span>
+      <div class="tbody"><div class="tname">该学段（${programName(stu.programId)}）已修完全部学期</div>
+      <div class="tmeta">请选择升入下一学段：
+        <select id="upgrade-program-${stu.id}" style="width:auto;display:inline-block;margin-left:6px;">
+          ${state.programs.filter(p=>p.id!==stu.programId).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}
+        </select>
+        <button class="btn sm primary" data-action="confirm-program-upgrade" data-student="${stu.id}">确认升段</button>
+      </div></div>
+    </div>`:''}
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>本学期各部门完成情况</h3></div>
+    <div class="grid-3">
+    ${dept.map(d=>`<div class="task-row" style="border:1px solid var(--line);border-radius:8px;padding:10px;">
+      <div class="tbody"><div class="tname">${d.role.name}</div><div class="tmeta mono">已完成 ${d.done} / 共 ${d.total}</div></div>
+    </div>`).join('')}
+    </div>
+  </div>
+
+  ${(alerts1.length||alerts2.length) ? `<div class="card" style="border-color:var(--warn)">
+    <h3 style="color:var(--warn)">预警提示</h3>
+    ${alerts1.map(a=>`<div class="task-row"><span class="stamp warn1">△</span><div class="tbody"><div class="tname">一级预警（内部）</div><div class="tmeta">${a.text}</div></div></div>`).join('')}
+    ${alerts2.map(a=>`<div class="task-row"><span class="stamp warn2">!</span><div class="tbody"><div class="tname">二级预警（家校）</div><div class="tmeta">${a.note} · ${a.date}</div></div><button class="btn sm" data-action="resolve-alert" data-student="${stu.id}" data-alert="${a.id}">标记已跟进</button></div>`).join('')}
+  </div>`:''}
+
+  <div class="card">
+    <div class="section-title"><h3>SOP 任务清单（本学期 · 单人单表）</h3><button class="btn sm" data-action="log-attendance-alert" data-student="${stu.id}">+ 记录考勤异常</button></div>
+    ${state.stages.sort((a,b)=>a.order-b.order).map(stage=>{
+      const tasks = tasksForStage.filter(t=>t.stageId===stage.id);
+      if(!tasks.length) return '';
+      return `<h4 style="margin-top:14px;font-size:13px;color:var(--ink-soft)">环节${stage.order} · ${stage.name}</h4>
+      ${tasks.map(t=>{
+        const st = taskStatusFor(t, stu);
+        const cls = st.state==='done'?'done':st.state==='overdue'?'warn2':st.state==='due-soon'?'warn1':'';
+        const icon = st.state==='done'?'✓':st.state==='overdue'?'!':st.state==='due-soon'?'△':'○';
+        const due = taskDueDate(t, stu);
+        return `<div class="task-row">
+          <span class="stamp ${cls}">${icon}</span>
+          <div class="tbody">
+            <div class="tname">${t.name}</div>
+            <div class="tmeta"><span class="pill role">${roleName(t.roleId)}</span> 产出：${t.deliverable||'—'} ${due?`· 截止 <span class="tdate">${due}</span>`:''}</div>
+          </div>
+          <button class="btn sm ${st.state==='done'?'':'primary'}" data-action="toggle-task" data-student="${stu.id}" data-task="${t.id}">${st.state==='done'?'撤销完成':'标记完成'}</button>
+        </div>`;
+      }).join('')}`;
+    }).join('') || '<div class="empty">当前配置中暂无任务，可到"环节与任务配置"添加。</div>'}
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>作业/考试跟进</h3><button class="btn sm" data-action="new-assignment" data-student="${stu.id}">+ 添加作业/考试</button></div>
+    ${(stu.assignments||[]).length? `<table><thead><tr><th>名称</th><th>截止日期</th><th>进度</th><th>状态</th><th></th></tr></thead><tbody>
+      ${stu.assignments.map(a=>{
+        const d = daysBetween(todayISO(), a.dueDate);
+        const warn = !a.done && d!=null && d<=5 && (a.progress||0)<50;
+        return `<tr>
+          <td>${a.name}</td>
+          <td class="mono">${a.dueDate||'—'} ${d!=null?`<span class="subtle">(${d<0?'逾期'+(-d)+'天':'剩'+d+'天'})</span>`:''}</td>
+          <td><input type="number" min="0" max="100" style="width:64px;display:inline-block" data-field="progress" data-student="${stu.id}" data-assignment="${a.id}" value="${a.progress||0}">%</td>
+          <td>${a.done?'<span class="pill role">已完成</span>':warn?'<span class="pill" style="background:var(--warn-soft);color:var(--warn)">一级预警</span>':'<span class="pill stage">进行中</span>'}</td>
+          <td><button class="btn sm" data-action="toggle-assignment" data-student="${stu.id}" data-assignment="${a.id}">${a.done?'撤销':'完成并归档截图'}</button></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>` : '<div class="empty">暂无作业/考试记录。</div>'}
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>临时任务 <span class="subtle mono">${(stu.adhocTasks||[]).filter(t=>!t.done).length} 项未完成</span></h3><button class="btn sm" data-action="new-temptask" data-student="${stu.id}">+ 添加临时任务</button></div>
+    ${(stu.adhocTasks||[]).length? stu.adhocTasks.map(t=>`<div class="task-row">
+        <span class="stamp ${t.done?'done':(t.dueDate && t.dueDate<todayISO()?'warn2':'')}">${t.done?'✓':'○'}</span>
+        <div class="tbody"><div class="tname">${escapeHTML(t.name)}</div><div class="tmeta"><span class="tag-adhoc">临时任务</span> ${t.dueDate?`截止 <span class="tdate">${t.dueDate}</span>`:''}</div></div>
+        <button class="btn sm ${t.done?'':'primary'}" data-action="toggle-temptask" data-student="${stu.id}" data-temptask="${t.id}">${t.done?'撤销完成':'标记完成'}</button>
+        <button class="btn sm danger" data-action="delete-temptask" data-student="${stu.id}" data-temptask="${t.id}">删除</button>
+      </div>`).join('') : '<div class="empty">暂无临时任务，仅对该学生独立生效。</div>'}
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>教务主管抽查记录</h3><button class="btn sm" data-action="new-spotcheck" data-student="${stu.id}">+ 添加抽查记录</button></div>
+    ${(stu.spotchecks||[]).length? stu.spotchecks.map(sc=>`<div class="task-row"><span class="stamp done">✓</span><div class="tbody"><div class="tname">${sc.date} · ${sc.reviewer||'教务主管'}</div><div class="tmeta">${sc.note}</div></div></div>`).join('') : '<div class="empty">暂无抽查记录。</div>'}
+  </div>
+
+  <div class="card">
+    <div class="section-title"><h3>历史学期记录</h3></div>
+    ${(stu.semesterHistory||[]).length? stu.semesterHistory.map(h=>`<div class="task-row">
+      <span class="stamp done">✓</span>
+      <div class="tbody">
+        <div class="tname">${programName(h.programId)} · 第${h.semester}学期${h.schoolId?' · '+schoolName(h.schoolId):''}</div>
+        <div class="tmeta">归档于 ${h.archivedAt} · 完成率 <b class="mono">${h.completionRate}%</b>（完成 ${h.completed.length} / 未完成 ${h.pending.length}）</div>
+        ${h.pending.length? `<div class="tmeta">未完成事项：${h.pending.map(p=>p.name).join('；')}</div>`:''}
+      </div>
+    </div>`).join('') : '<div class="empty">暂无历史学期记录。完成本学期后点击上方"进入下一学期"会自动归档到这里。</div>'}
+  </div>
+  `;
+}
+function recurringLabel(r){
+  if(r.type==='daily-class') return '每次上课';
+  if(r.type==='event') return '事件触发';
+  if(r.type==='weekly') return `每周 ${r.days.map(d=>WEEKDAY_NAMES[d]).join('/')}`;
+  return '常规';
+}
+
+/* ---------- Reminders tab ---------- */
+function renderReminders(reminders){
+  if(!reminders.length) return `<div class="empty">今天没有到期或需要跟进的事项。</div>`;
+  const groups = {'overdue':'已逾期','due-soon':'即将到期','attendance-warn2':'二级预警 · 考勤','assignment-warn1':'一级预警 · 作业进度','adhoc':'自定义提醒'};
+  return Object.keys(groups).map(k=>{
+    const items = reminders.filter(r=>r.type===k);
+    if(!items.length) return '';
+    return `<div class="card"><h3>${groups[k]}（${items.length}）</h3>${items.map(reminderRowHTML).join('')}</div>`;
+  }).join('') + `
+  <div class="card">
+    <div class="section-title"><h3>新增自定义提醒</h3></div>
+    <div class="field-row">
+      <div><label>标题</label><input type="text" id="adhoc-title" placeholder="例如：致电家长确认住宿"></div>
+      <div><label>提醒日期</label><input type="date" id="adhoc-date" value="${todayISO()}"></div>
+      <div><label>责任角色</label><select id="adhoc-role">${state.roles.map(r=>`<option value="${r.id}">${r.name}</option>`).join('')}</select></div>
+    </div>
+    <label>提醒内容（可复制到群通知）</label><textarea id="adhoc-msg"></textarea>
+    <div class="modal-actions"><button class="btn primary" data-action="add-adhoc">添加提醒</button></div>
+  </div>`;
+}
+
+/* ---------- Config tab ---------- */
+function renderConfig(){
+  return `
+  <div class="card">
+    <h3>环节（可增删改，无需重新部署）</h3>
+    <p class="subtle">环节名称完全自定义，可用来标记"新学期""新学段"等任意分组，不限于固定的服务流程。</p>
+    <table><thead><tr><th>顺序</th><th>环节名称</th><th>触发条件</th><th></th></tr></thead><tbody>
+    ${state.stages.sort((a,b)=>a.order-b.order).map(s=>`<tr>
+      <td class="mono">${s.order}</td><td>${s.name}<div class="subtle">${s.en||''}</div></td><td class="subtle">${s.trigger}</td>
+      <td><button class="btn sm" data-action="edit-stage" data-id="${s.id}">编辑</button>
+          <button class="btn sm danger" data-action="delete-stage" data-id="${s.id}">删除</button></td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h3>任务 / SOP 事项</h3>
+    <table><thead><tr><th>环节</th><th>事项</th><th>责任人</th><th>时间规则</th><th></th></tr></thead><tbody>
+    ${state.tasks.map(t=>`<tr>
+      <td><span class="pill stage">${stageName(t.stageId)}</span></td>
+      <td>${t.name}<div class="subtle">产出：${t.deliverable||'—'}</div></td>
+      <td><span class="pill role">${roleName(t.roleId)}</span></td>
+      <td class="subtle">${t.recurring? recurringLabel(t.recurring) : (t.dateField? `${DATE_FIELDS.find(d=>d.id===t.dateField)?.label||t.dateField} ${t.dueOffsetDays>=0?'+':''}${t.dueOffsetDays}天，提前${t.reminderLeadDays}天提醒` : '未设置')}</td>
+      <td><button class="btn sm" data-action="edit-task" data-id="${t.id}">编辑</button>
+          <button class="btn sm danger" data-action="delete-task" data-id="${t.id}">删除</button></td>
+    </tr>`).join('')}
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h3>角色</h3>
+    <table><thead><tr><th>角色名称</th><th></th></tr></thead><tbody>
+    ${state.roles.map(r=>`<tr><td><span class="pill role">${r.name}</span></td>
+      <td><button class="btn sm" data-action="edit-role" data-id="${r.id}">编辑</button>
+          <button class="btn sm danger" data-action="delete-role" data-id="${r.id}">删除</button></td></tr>`).join('')}
+    </tbody></table>
+    <div class="modal-actions"><button class="btn sm" data-action="new-role">+ 新增角色</button></div>
+  </div>`;
+}
+
+/* ---------- Data tab ---------- */
+function renderData(){
+  return `<div class="card">
+    <div class="section-title"><h3>学段（学生学业阶段）</h3><button class="btn sm" data-action="new-program">+ 新增学段</button></div>
+    <table><thead><tr><th>学段名称</th><th>默认学期数</th><th></th></tr></thead><tbody>
+    ${state.programs.map(p=>`<tr><td>${p.name}</td><td class="mono">${p.totalSemesters}</td>
+      <td><button class="btn sm" data-action="edit-program" data-id="${p.id}">编辑</button>
+          <button class="btn sm danger" data-action="delete-program" data-id="${p.id}">删除</button></td></tr>`).join('')}
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div class="section-title"><h3>学校</h3><button class="btn sm" data-action="new-school">+ 新增学校</button></div>
+    <table><thead><tr><th>学校名称</th><th>备注</th><th></th></tr></thead><tbody>
+    ${state.schools.map(s=>`<tr><td>${s.name}</td><td class="subtle">${s.note||'—'}</td>
+      <td><button class="btn sm" data-action="edit-school" data-id="${s.id}">编辑</button>
+          <button class="btn sm danger" data-action="delete-school" data-id="${s.id}">删除</button></td></tr>`).join('')}
+    </tbody></table>
+  </div>
+  <div class="card">
+    <div class="section-title"><h3>学生档案自定义字段</h3><button class="btn sm" data-action="new-customfield">+ 新增字段</button></div>
+    <p class="subtle">在这里新增的字段会自动出现在"新增学生"表单和每个学生的档案页面里。</p>
+    <table><thead><tr><th>字段名称</th><th></th></tr></thead><tbody>
+    ${state.customFieldDefs.length? state.customFieldDefs.map(f=>`<tr><td>${f.label}</td>
+      <td><button class="btn sm danger" data-action="delete-customfield" data-id="${f.id}">删除</button></td></tr>`).join('') : '<tr><td class="subtle">暂无自定义字段</td><td></td></tr>'}
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h3>导出 / 导入</h3>
+    <p class="subtle">系统数据保存在浏览器会话中。部署到 Netlify 等静态托管后，建议定期导出 JSON 备份，或对接 Supabase 实现团队共享持久化（当前架构已将所有数据集中在一个 <code>state</code> 对象中，可直接替换为 Supabase 读写）。</p>
+    <p class="subtle">日历提醒说明：「导出待办到日历」生成的是 .ics 文件；导入 Google 日历 / Outlook / 手机自带日历后，即使不打开本系统，也会按日历自身的通知设置提醒你。这是一次性快照，学生信息变化后需要重新导出。部署到云端数据库（Supabase）后，还可以升级为"实时订阅日历"（webcal:// 链接，数据一变化日历自动跟着更新），参见随附的 <span class="mono">calendar-feed.js</span> 和 <span class="mono">supabase_schema.sql</span>。</p>
+    <div class="modal-actions">
+      <button class="btn primary" data-action="export-json">导出为 JSON 文件</button>
+      <label class="btn" style="display:inline-block">导入 JSON 文件<input type="file" id="import-file" accept="application/json" style="display:none"></label>
+      <button class="btn danger" data-action="reset-default">重置为默认 SOP</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>当前数据概览</h3>
+    <table><tbody>
+      <tr><td>角色数量</td><td class="mono">${state.roles.length}</td></tr>
+      <tr><td>环节数量</td><td class="mono">${state.stages.length}</td></tr>
+      <tr><td>任务/SOP事项数量</td><td class="mono">${state.tasks.length}</td></tr>
+      <tr><td>学段数量</td><td class="mono">${state.programs.length}</td></tr>
+      <tr><td>学校数量</td><td class="mono">${state.schools.length}</td></tr>
+      <tr><td>学生档案数量</td><td class="mono">${state.students.length}</td></tr>
+    </tbody></table>
+  </div>`;
+}
+
+/* ============================= MODALS ============================= */
+function modalHTML(){
+  const m = ui.modal;
+  let body='', title='';
+  if(m.type==='student'){
+    if(m.data.id){
+      title = '编辑学生姓名';
+      body = `<label>姓名</label><input type="text" id="f-name" value="${m.data.name||''}">`;
+    } else {
+      title = '添加新学生';
+      const defaultProgram = state.programs[0];
+      body = `<label>姓名</label><input type="text" id="f-name" placeholder="学生姓名">
+        <label>学段</label><select id="f-programid">${state.programs.map(p=>`<option value="${p.id}" data-total="${p.totalSemesters}">${p.name}</option>`).join('')}</select>
+        <div class="field-row">
+          <div><label>当前学期</label><input type="number" id="f-semester" min="1" value="1"></div>
+          <div><label>该学段共几个学期</label><input type="number" id="f-total" min="1" value="${defaultProgram?defaultProgram.totalSemesters:5}"></div>
+        </div>
+        <label>学校</label><select id="f-schoolid">${state.schools.map(s=>`<option value="${s.id}">${s.name}${s.note?'（'+s.note+'）':''}</option>`).join('')}</select>
+        <label>开学日期（可选，稍后也可在档案中补充）</label><input type="date" id="f-termstart">
+        ${state.customFieldDefs.length? state.customFieldDefs.map(f=>`<label>${f.label}</label><input type="text" id="f-cf-${f.id}">`).join(''):''}`;
+    }
+  }
+  if(m.type==='assignment'){
+    title = '新增作业/考试';
+    body = `<label>名称</label><input type="text" id="f-name" placeholder="如：Math Mock Test 2">
+      <label>截止日期</label><input type="date" id="f-due" value="${todayISO()}">
+      <label>当前进度 %</label><input type="number" id="f-progress" value="0" min="0" max="100">`;
+  }
+  if(m.type==='spotcheck'){
+    title='教务主管抽查记录';
+    body = `<label>日期</label><input type="date" id="f-date" value="${todayISO()}">
+      <label>抽查人</label><input type="text" id="f-reviewer" placeholder="教务主管姓名">
+      <label>抽查备注</label><textarea id="f-note"></textarea>`;
+  }
+  if(m.type==='attendance'){
+    title='记录考勤异常（二级预警）';
+    body = `<label>日期</label><input type="date" id="f-date" value="${todayISO()}">
+      <label>情况说明</label><textarea id="f-note" placeholder="如：14:00课程未到，实习生已电话联系家长"></textarea>`;
+  }
+  if(m.type==='stage'){
+    title = m.data.id? '编辑环节':'新增环节';
+    body = `<label>环节名称</label><input type="text" id="f-name" value="${m.data.name||''}">
+      <label>顺序</label><input type="number" id="f-order" value="${m.data.order|| (state.stages.length+1)}">
+      <label>触发条件</label><textarea id="f-trigger">${m.data.trigger||''}</textarea>`;
+  }
+  if(m.type==='task'){
+    title = m.data.id? '编辑任务/SOP事项':'新增任务/SOP事项';
+    const newTaskNotice = m.data.id? '' : '<p class="subtle">新增任务默认为手动勾选完成的清单项，不会自动计算截止日期或提醒。</p>';
+    body = `<label>所属环节</label><select id="f-stage">${state.stages.map(s=>`<option value="${s.id}" ${m.data.stageId===s.id?'selected':''}>${s.name}</option>`).join('')}</select>
+      <p class="subtle">环节名称可在下方"环节"列表中自由新增、重命名或删除，比如"新学期""新学段"，用来说明这项任务只在哪个环节需要执行。</p>
+      <label>事项名称</label><input type="text" id="f-name" value="${m.data.name||''}">
+      <label>产出物</label><input type="text" id="f-deliverable" value="${m.data.deliverable||''}">
+      <label>责任人角色</label><select id="f-role">${state.roles.map(r=>`<option value="${r.id}" ${m.data.roleId===r.id?'selected':''}>${r.name}</option>`).join('')}</select>
+      ${newTaskNotice}`;
+  }
+  if(m.type==='role'){
+    title = m.data.id? '编辑角色':'新增角色';
+    body = `<label>角色名称</label><input type="text" id="f-name" value="${m.data.name||''}">`;
+  }
+  if(m.type==='temptask'){
+    title = '添加临时任务';
+    body = `<label>学生</label><select id="f-student">${state.students.map(s=>`<option value="${s.id}" ${m.studentId===s.id?'selected':''}>${s.name}</option>`).join('')}</select>
+      <label>任务内容</label><textarea id="f-content" placeholder="填写这项临时任务的具体内容……"></textarea>
+      <label>截止日期（可选）</label><input type="date" id="f-due">
+      <p class="subtle">该任务只会添加到所选学生的档案中，其他学生不会看到或受影响。</p>`;
+  }
+  if(m.type==='program'){
+    title = m.data.id? '编辑学段':'新增学段';
+    body = `<label>学段名称</label><input type="text" id="f-name" value="${m.data.name||''}" placeholder="如：预科">
+      <label>默认学期数</label><input type="number" id="f-total" min="1" value="${m.data.totalSemesters||5}">`;
+  }
+  if(m.type==='school'){
+    title = m.data.id? '编辑学校':'新增学校';
+    body = `<label>学校名称</label><input type="text" id="f-name" value="${m.data.name||''}" placeholder="如：SIM">
+      <label>备注（可选）</label><input type="text" id="f-note" value="${m.data.note||''}" placeholder="如：每学期 12 周测">`;
+  }
+  if(m.type==='customfield'){
+    title = '新增自定义字段';
+    body = `<label>字段名称</label><input type="text" id="f-name" placeholder="如：家长联系方式">`;
+  }
+  if(m.type==='confirm'){
+    return `<div class="modal-bg"><div class="modal">
+      <h3>请确认</h3>
+      <p>${escapeHTML(m.data.message)}</p>
+      <div class="modal-actions">
+        <button class="btn" data-action="close-modal">取消</button>
+        <button class="btn primary" data-action="confirm-yes">确认</button>
+      </div>
+    </div></div>`;
+  }
+  if(m.type==='export'){
+    title = `导出文件：${m.data.filename}`;
+    return `<div class="modal-bg"><div class="modal">
+      <h3>${title}</h3>
+      <p class="subtle">点击下方按钮下载。如果浏览器没有弹出保存对话框（常见于预览窗口的安全限制），可以"在新标签页打开"后用浏览器菜单另存为，或直接复制下面的内容手动保存为 <span class="mono">${m.data.filename}</span>。</p>
+      <div class="modal-actions" style="justify-content:flex-start;flex-wrap:wrap;">
+        ${m.data.url? `<a class="btn primary" href="${m.data.url}" download="${m.data.filename}">⬇ 下载 ${m.data.filename}</a>
+        <a class="btn" href="${m.data.url}" target="_blank" rel="noopener">在新标签页打开</a>`:''}
+        <button class="btn" data-action="copy-export">复制内容</button>
+      </div>
+      <label style="margin-top:12px;">文件内容预览</label>
+      <textarea id="export-content" style="min-height:220px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;" readonly>${escapeHTML(m.data.content)}</textarea>
+      <div class="modal-actions"><button class="btn" data-action="close-modal">关闭</button></div>
+    </div></div>`;
+  }
+  return `<div class="modal-bg"><div class="modal">
+    <h3>${title}</h3>
+    ${body}
+    <div class="modal-actions">
+      <button class="btn" data-action="close-modal">取消</button>
+      <button class="btn primary" data-action="save-modal">保存</button>
+    </div>
+  </div></div>`;
+}
+
+/* ============================= EVENTS ============================= */
+function bindEvents(){
+  app.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ ui.tab=b.dataset.nav; ui.openStudent=null; render(); });
+  app.querySelectorAll('[data-role-tab]').forEach(b=>b.onclick=()=>{ ui.dashboardRole=b.dataset.roleTab; render(); });
+
+  app.querySelectorAll('[data-action]').forEach(el=>{
+    el.onclick = (e)=>{
+      const a = el.dataset.action;
+      if(a==='new-student'){ ui.modal={type:'student', data:{}}; render(); }
+      if(a==='open-student'){ ui.openStudent = el.dataset.id; render(); }
+      if(a==='back-students'){ ui.openStudent=null; render(); }
+      if(a==='edit-student'){ const s=state.students.find(s=>s.id===el.dataset.id); ui.modal={type:'student', data:s}; render(); }
+      if(a==='delete-student'){ showConfirm('确认删除该学生档案？', ()=>{ state.students=state.students.filter(s=>s.id!==el.dataset.id); persist(); }); }
+      if(a==='advance-semester'){
+        const stu = state.students.find(s=>s.id===el.dataset.student);
+        showConfirm(`确认${stu.name}已完成第${stu.currentSemester}学期，归档并进入下一学期？`, ()=>{ advanceSemester(stu); persist(); });
+      }
+      if(a==='confirm-program-upgrade'){
+        const stu = state.students.find(s=>s.id===el.dataset.student);
+        const sel = document.getElementById('upgrade-program-'+stu.id);
+        const newProgram = state.programs.find(p=>p.id===sel.value);
+        if(newProgram){ stu.programId=newProgram.id; stu.totalSemesters=newProgram.totalSemesters; stu.currentSemester=1; stu.awaitingProgramUpgrade=false; persist(); }
+      }
+      if(a==='new-assignment'){ ui.modal={type:'assignment', data:{}, studentId: el.dataset.student}; render(); }
+      if(a==='new-spotcheck'){ ui.modal={type:'spotcheck', data:{}, studentId: el.dataset.student}; render(); }
+      if(a==='log-attendance-alert'){ ui.modal={type:'attendance', data:{}, studentId: el.dataset.student}; render(); }
+      if(a==='toggle-task'){
+        const stu = state.students.find(s=>s.id===el.dataset.student);
+        const tid = el.dataset.task;
+        const cur = stu.taskStatus[tid];
+        stu.taskStatus[tid] = cur&&cur.done ? {done:false} : {done:true, date:todayISO()};
+        persist();
+      }
+      if(a==='toggle-assignment'){
+        const stu = state.students.find(s=>s.id===el.dataset.student);
+        const asg = stu.assignments.find(x=>x.id===el.dataset.assignment);
+        asg.done = !asg.done; if(asg.done) asg.progress=100;
+        persist();
+      }
+      if(a==='resolve-alert'){
+        const stu = state.students.find(s=>s.id===el.dataset.student);
+        const al = stu.alerts.find(x=>x.id===el.dataset.alert);
+        al.resolved = true; persist();
+      }
+      if(a==='mark-sent'){ const r=state.adhocReminders.find(x=>x.id===el.dataset.id); r.sent=true; persist(); }
+      if(a==='add-adhoc'){
+        const title=document.getElementById('adhoc-title').value.trim();
+        if(!title) return;
+        state.adhocReminders.push({id:uid('rem'), title, targetDate:document.getElementById('adhoc-date').value, roleId:document.getElementById('adhoc-role').value, message:document.getElementById('adhoc-msg').value, sent:false});
+        persist();
+      }
+      if(a==='new-temptask'){ ui.modal={type:'temptask', data:{}, studentId: el.dataset.student || (state.students[0]||{}).id}; render(); }
+      if(a==='toggle-temptask'){
+        const stu = state.students.find(s=>s.id===el.dataset.student);
+        const t = (stu.adhocTasks||[]).find(x=>x.id===el.dataset.temptask);
+        if(t){ t.done = !t.done; persist(); }
+      }
+      if(a==='delete-temptask'){
+        showConfirm('确认删除该临时任务？', ()=>{
+          const stu = state.students.find(s=>s.id===el.dataset.student);
+          stu.adhocTasks = (stu.adhocTasks||[]).filter(x=>x.id!==el.dataset.temptask);
+          persist();
+        });
+      }
+      if(a==='new-stage'){ ui.modal={type:'stage', data:{}}; render(); }
+      if(a==='edit-stage'){ ui.modal={type:'stage', data: state.stages.find(s=>s.id===el.dataset.id)}; render(); }
+      if(a==='delete-stage'){ showConfirm('删除该环节将同时保留其任务但需要重新分配环节，确认删除？', ()=>{ state.stages=state.stages.filter(s=>s.id!==el.dataset.id); persist(); }); }
+      if(a==='new-task'){ ui.modal={type:'task', data:{stageId: state.stages[0]?.id}}; render(); }
+      if(a==='edit-task'){ ui.modal={type:'task', data: state.tasks.find(t=>t.id===el.dataset.id)}; render(); }
+      if(a==='delete-task'){ showConfirm('确认删除该任务？', ()=>{ state.tasks=state.tasks.filter(t=>t.id!==el.dataset.id); persist(); }); }
+      if(a==='new-role'){ ui.modal={type:'role', data:{}}; render(); }
+      if(a==='edit-role'){ ui.modal={type:'role', data: state.roles.find(r=>r.id===el.dataset.id)}; render(); }
+      if(a==='delete-role'){ showConfirm('确认删除该角色？相关任务需重新分配责任人。', ()=>{ state.roles=state.roles.filter(r=>r.id!==el.dataset.id); persist(); }); }
+      if(a==='new-program'){ ui.modal={type:'program', data:{}}; render(); }
+      if(a==='edit-program'){ ui.modal={type:'program', data: state.programs.find(p=>p.id===el.dataset.id)}; render(); }
+      if(a==='delete-program'){ showConfirm('确认删除该学段？已使用该学段的学生档案需要手动重新指定。', ()=>{ state.programs=state.programs.filter(p=>p.id!==el.dataset.id); persist(); }); }
+      if(a==='new-school'){ ui.modal={type:'school', data:{}}; render(); }
+      if(a==='edit-school'){ ui.modal={type:'school', data: state.schools.find(s=>s.id===el.dataset.id)}; render(); }
+      if(a==='delete-school'){ showConfirm('确认删除该学校？', ()=>{ state.schools=state.schools.filter(s=>s.id!==el.dataset.id); persist(); }); }
+      if(a==='new-customfield'){ ui.modal={type:'customfield', data:{}}; render(); }
+      if(a==='delete-customfield'){ showConfirm('确认删除该自定义字段？已填写的数据也会一并移除展示。', ()=>{ state.customFieldDefs=state.customFieldDefs.filter(f=>f.id!==el.dataset.id); persist(); }); }
+      if(a==='toggle-history'){ ui.historyOpen = ui.historyOpen||{}; ui.historyOpen[el.dataset.role]=!ui.historyOpen[el.dataset.role]; render(); }
+      if(a==='export-ics-all'){ downloadICS(collectPendingEvents(null), `SOP-全部待办-${todayISO()}.ics`); }
+      if(a==='export-ics-role'){ downloadICS(collectPendingEvents(el.dataset.role), `SOP-${roleName(el.dataset.role)}-待办-${todayISO()}.ics`); }
+      if(a==='export-json'){ exportJSON(); }
+      if(a==='reset-default'){ showConfirm('将清空当前所有数据并恢复默认 SOP 配置，确认？', ()=>{ state = seedState(); persist(); }); }
+      if(a==='copy-export'){
+        const ta=document.getElementById('export-content');
+        ta.select();
+        try{ navigator.clipboard.writeText(ta.value); }catch(err){ document.execCommand('copy'); }
+        showInfo('内容已复制到剪贴板。');
+      }
+      if(a==='close-modal'){ ui.modal=null; render(); }
+      if(a==='confirm-yes'){ const cb = ui.modal && ui.modal.onConfirm; ui.modal=null; if(cb) cb(); }
+      if(a==='save-modal'){ saveModal(); }
+    };
+  });
+
+  // new-student modal: auto-fill total semesters when program changes
+  const programSel = document.getElementById('f-programid');
+  if(programSel) programSel.onchange = ()=>{
+    const opt = programSel.selectedOptions[0];
+    const totalField = document.getElementById('f-total');
+    if(opt && totalField) totalField.value = opt.dataset.total || 5;
+  };
+
+  // inline field edits (student dates/stage, assignment progress)
+  app.querySelectorAll('[data-field][data-student]').forEach(el=>{
+    el.onchange = ()=>{
+      const stu = state.students.find(s=>s.id===el.dataset.student);
+      const field = el.dataset.field;
+      if(el.dataset.assignment){
+        const asg = stu.assignments.find(a=>a.id===el.dataset.assignment);
+        asg[field] = Number(el.value);
+      } else if(['enrollDate','termStart','progressionMilestone'].includes(field)){
+        stu.dates[field] = el.value;
+      } else if(['currentSemester','totalSemesters'].includes(field)){
+        stu[field] = Number(el.value)||1;
+      } else {
+        stu[field] = el.value;
+      }
+      persist();
+    };
+  });
+  app.querySelectorAll('[data-customfield][data-student]').forEach(el=>{
+    el.onchange = ()=>{
+      const stu = state.students.find(s=>s.id===el.dataset.student);
+      stu.customFields = stu.customFields||{};
+      stu.customFields[el.dataset.customfield] = el.value;
+      persist();
+    };
+  });
+  const searchInput = document.getElementById('student-search');
+  if(searchInput){
+    // Use composition events so re-rendering mid-keystroke doesn't break IME input (Chinese/Japanese/Korean).
+    searchInput.oninput = ()=>{
+      ui.studentSearch = searchInput.value;
+      ui.searchFocus = true;
+      if(!ui.composing) render();
+    };
+    searchInput.addEventListener('compositionstart', ()=>{ ui.composing = true; });
+    searchInput.addEventListener('compositionend', ()=>{
+      ui.composing = false;
+      ui.studentSearch = searchInput.value;
+      render();
+    });
+    searchInput.onblur = ()=>{ ui.searchFocus = false; };
+    if(ui.searchFocus){ searchInput.focus(); const v=searchInput.value; searchInput.setSelectionRange(v.length, v.length); }
+  }
+  const searchProgramSel = document.getElementById('search-program');
+  if(searchProgramSel) searchProgramSel.onchange = ()=>{ ui.searchProgram = searchProgramSel.value; render(); };
+  const searchSchoolSel = document.getElementById('search-school');
+  if(searchSchoolSel) searchSchoolSel.onchange = ()=>{ ui.searchSchool = searchSchoolSel.value; render(); };
+
+  const importFile = document.getElementById('import-file');
+  if(importFile) importFile.onchange = (e)=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{ state = JSON.parse(reader.result); persist(); showInfo('导入成功'); }
+      catch(err){ showInfo('文件格式有误，导入失败'); }
+    };
+    reader.readAsText(file);
+  };
+}
+
+function saveModal(){
+  const m = ui.modal;
+  const val = (id)=> document.getElementById(id)?.value;
+  if(m.type==='student'){
+    if(m.data.id){ m.data.name=val('f-name'); }
+    else {
+      const customFields={};
+      state.customFieldDefs.forEach(f=>{ customFields[f.id]=val('f-cf-'+f.id)||''; });
+      state.students.push({
+        id:uid('stu'), name:val('f-name')||'未命名学生',
+        programId: val('f-programid') || (state.programs[0]||{}).id,
+        currentSemester: Number(val('f-semester')||1),
+        totalSemesters: Number(val('f-total')||5),
+        schoolId: val('f-schoolid') || (state.schools[0]||{}).id,
+        stageId: state.stages[0]?.id,
+        dates:{enrollDate:todayISO(), termStart: val('f-termstart')||null, progressionMilestone:null},
+        taskStatus:{}, assignments:[], alerts:[], spotchecks:[], semesterHistory:[], customFields, adhocTasks:[],
+      });
+    }
+  }
+  if(m.type==='assignment'){
+    const stu = state.students.find(s=>s.id===m.studentId);
+    stu.assignments.push({id:uid('asg'), name:val('f-name'), dueDate:val('f-due'), progress:Number(val('f-progress')||0), done:false});
+  }
+  if(m.type==='spotcheck'){
+    const stu = state.students.find(s=>s.id===m.studentId);
+    stu.spotchecks = stu.spotchecks||[];
+    stu.spotchecks.unshift({date:val('f-date'), reviewer:val('f-reviewer'), note:val('f-note')});
+  }
+  if(m.type==='attendance'){
+    const stu = state.students.find(s=>s.id===m.studentId);
+    stu.alerts = stu.alerts||[];
+    stu.alerts.push({id:uid('alert'), date:val('f-date'), note:val('f-note'), resolved:false});
+  }
+  if(m.type==='stage'){
+    if(m.data.id){ m.data.name=val('f-name'); m.data.order=Number(val('f-order')); m.data.trigger=val('f-trigger'); }
+    else { state.stages.push({id:uid('stage'), name:val('f-name'), order:Number(val('f-order')), trigger:val('f-trigger')}); }
+  }
+  if(m.type==='temptask'){
+    const stu = state.students.find(s=>s.id===val('f-student'));
+    const content = (val('f-content')||'').trim();
+    if(stu && content){
+      stu.adhocTasks = stu.adhocTasks||[];
+      stu.adhocTasks.push({id:uid('adhoc'), name:content, dueDate:val('f-due')||null, done:false, createdAt:todayISO()});
+    }
+  }
+  if(m.type==='task'){
+    const payload = {
+      stageId: val('f-stage'), name: val('f-name'), deliverable: val('f-deliverable'), roleId: val('f-role'),
+    };
+    if(m.data.id){ Object.assign(m.data, payload); }
+    else { state.tasks.push({id:uid('task'), ...payload, dateField:null, dueOffsetDays:null, reminderLeadDays:null, recurring:null}); }
+  }
+  if(m.type==='role'){
+    if(m.data.id){ m.data.name=val('f-name'); }
+    else { state.roles.push({id:uid('role'), name:val('f-name')}); }
+  }
+  if(m.type==='program'){
+    if(m.data.id){ m.data.name=val('f-name'); m.data.totalSemesters=Number(val('f-total')||5); }
+    else { state.programs.push({id:uid('prog'), name:val('f-name'), totalSemesters:Number(val('f-total')||5)}); }
+  }
+  if(m.type==='school'){
+    if(m.data.id){ m.data.name=val('f-name'); m.data.note=val('f-note'); }
+    else { state.schools.push({id:uid('school'), name:val('f-name'), note:val('f-note')}); }
+  }
+  if(m.type==='customfield'){
+    state.customFieldDefs.push({id:uid('cf'), label:val('f-name')});
+  }
+  ui.modal=null;
+  persist();
+}
+
+function exportJSON(){
+  showExportModal(JSON.stringify(state,null,2), `sop-data-${todayISO()}.json`, 'application/json');
+}
+
+initApp();
+</script>
+</body>
+</html>
